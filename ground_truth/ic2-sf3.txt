@@ -14,7 +14,7 @@
 13194139555859|Adel|Mansour|3023667732209|maybe|1324996356492
 10995116280854|Abdul Rahman|Budjana|3023661814844|fine|1324994854159
 24189255835189|Milan|Božič|3023665709469|ok|1324991152353
-24189255835235|Christos|Antoniou|3023667518314|About Alberto Fujimori,  a fourth trial, he pled guilty to bribeAbout Hung Up,|1324989048772
+24189255835235|Christos|Antoniou|3023667518314|About Alberto Fujimori,  a fourth trial, he pled guilty to bribeAbout Hung Up, |1324989048772
 2199023257206|Kamal|Aziz|3023669968768|ok|1324987982374
 9116|Adriaan|Dijk|3023667557884|right|1324983843020
 13194139555859|Adel|Mansour|3023658244655|maybe|1324981591981
@@ -75,13 +75,13 @@
 19791209318913|Bodan|Mojsov|4398059173977|Rishi Kapoor (born 4 September 1952) is an Indian Bollywood actor, film producer and director.About Rishi Kapoor, ood acto|1347220205588
 13194139535632|Isabel|Diaz|4398059791987|About Adolf Hitler, ust for mainstream newspapers and political parties. The cAbout Condoleezza Rice, . Rice was the first female African-American secretary of About Timur|1347215769184
 13194139535632|Isabel|Diaz|4398061076870|maybe|1347212838978
-30786325587981|A.|Khan|4398055417569|About Diana, Princess of Wales, 9, she was the presidAbout Joe Biden, ing about|1347212478633
+30786325587981|A.|Khan|4398055417569|About Diana, Princess of Wales, 9, she was the presidAbout Joe Biden, ing about |1347212478633
 13194139535632|Isabel|Diaz|4398055223167|no way!|1347212441102
 30786325587981|A.|Khan|4398051971186|About Hamid Karzai, declared winner About Pope Benedict XVI, any Christians eAb|1347206424756
 13194139535632|Isabel|Diaz|4398059788505|About Adolf Hitler, personally claimed he was fightinAbout Mohammad Reza Pahlavi, ri, and recognit|1347206200075
 4398046522644|Ernst|Andrle|4398056670792|cool|1347205565025
 13194139535632|Isabel|Diaz|4398059899759|About Genghis Khan, erford, Dewitt Wallace About Benny Goodman,  mid-1930s, Benny GoodmAbo|1347204274568
-32985348852646|Binh|Pham|4398056308492|About Western Satraps,  Kshatrapas, or Kshaharatas (35–405) were Saka rulers of the western and central part of India. Their state, or at least part of it, was called Ariaca according to the Periplus of the Erythraean Sea. They were successors to the Indo-Scythians, and were contemporaneous with the Kushans who ruled the northern part of the Indian subcontinent and were possibly their overlords, and the Satavahana who ruled in Central India. They are called Western in contrast to the Northern Indo-Scythian satraps who ruled in the area of Mathura, such as Rajuvula, and his successors under the Kushans, the Great Satrap Kharapallana and the Satrap Vanaspara. Although they called themselves Satraps on their coins, leading|1347196500562
+32985348852646|Binh|Pham|4398056308492|About Western Satraps,  Kshatrapas, or Kshaharatas (35–405) were Saka rulers of the western and central part of India. Their state, or at least part of it, was called Ariaca according to the Periplus of the Erythraean Sea. They were successors to the Indo-Scythians, and were contemporaneous with the Kushans who ruled the northern part of the Indian subcontinent and were possibly their overlords, and the Satavahana who ruled in Central India. They are called Western in contrast to the Northern Indo-Scythian satraps who ruled in the area of Mathura, such as Rajuvula, and his successors under the Kushans, the Great Satrap Kharapallana and the Satrap Vanaspara. Although they called themselves Satraps on their coins, leading |1347196500562
 32985348852646|Binh|Pham|4398060303088|LOL|1347190110239
 15393162796675|Hermann|Schmidt|4398060430264|roflol|1347188328764
 13194139535632|Isabel|Diaz|4398061039391|maybe|1347186793302
