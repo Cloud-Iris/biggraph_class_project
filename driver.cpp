@@ -115,8 +115,11 @@ bool compareResults(std::vector<std::vector<GPStore::Value>> &result, std::vecto
 const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
 const string DATA_DIR_3 = "social_network-csv_composite-longdateformatter-sf3/";
 /**
- * ic1 给定一个人的 id，找这个人直接或者间接认识的人，然后根据一些限制条件筛选，返回这些人的信息
+ * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
+ * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
+ * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
  */
+
 
 
 int main(int argc, char *argv[]) {
@@ -142,6 +145,7 @@ int main(int argc, char *argv[]) {
             string groundTruthDir = "ground_truth/";
             vector<string> procs = {"ic1", "ic2", "is1"};
             for (const string &proc : procs) {
+                // NOTE 找到对应的 ground truth 文件 ic1-sf0.1.txt, ic2-sf0.1.txt, is1-sf0.1.txt
                 string groundTruthFile = groundTruthDir + proc + "-sf" + sf + ".txt";
                 ifstream fin(groundTruthFile);
                 if (!fin.is_open()) {
@@ -154,6 +158,8 @@ int main(int argc, char *argv[]) {
                     vector<GPStore::Value> args;
                     vector<vector<GPStore::Value>> result;
                     if (proc == "ic1") {
+                        // 数据例子：32985348834375 Tom
+                        // 拆解为 personId = 32985348834375, firstName = Tom
                         size_t pos = line.find(" ");
                         string personId_str = line.substr(0, pos);
                         string firstName = line.substr(pos + 1);
@@ -177,6 +183,7 @@ int main(int argc, char *argv[]) {
                     }
                     printResults(result);
                     getline(fin, line);
+                    // 3 种文件都会有一个数字，表示接下来数据的行数
                     int numRows = stoi(line);
                     vector<vector<string>> trueResults;
                     for (int i = 0; i < numRows; ++i) {
