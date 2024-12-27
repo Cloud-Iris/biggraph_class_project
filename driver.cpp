@@ -112,6 +112,13 @@ bool compareResults(std::vector<std::vector<GPStore::Value>> &result, std::vecto
     return true;
 }
 
+const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
+const string DATA_DIR_3 = "social_network-csv_composite-longdateformatter-sf3/";
+/**
+ * ic1 给定一个人的 id，找这个人直接或者间接认识的人，然后根据一些限制条件筛选，返回这些人的信息
+ */
+
+
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         cout << "Usage: " << argv[0] << " <sf in {0.1, 3}>" << endl;
