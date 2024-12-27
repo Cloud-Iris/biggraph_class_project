@@ -1,3 +1,30 @@
+### 任务要求
+
+实现一个原型图数据库系统，以支撑 LDBC SNB 查询 IC1、IC2、IS1 的存储过程。
+
+LDBC SNB 是一套面向社交网络场景的图查询基准测试（benchmark）。
+官网：https://ldbcouncil.org/benchmarks/snb-interactive/
+官方 GitHub 文档仓库：https://github.com/ldbc/ldbc_snb_docs
+完成本作业不必对 LDBC SNB 有完整的了解，只需参考课程给出的材料即可。
+
+### 作答方式
+
+- driver.cpp ：补全加载数据集的部分代码（注释 [FILL HERE] Load the dataset according to the scale factor 处）；本文件中其他代码不允许修改
+- PProcedure.cpp ：参考 ic1、is1 函数，补全 ic2 的实现；ic1、is1 函数实现仅供参考，可以随意修改
+- Node.[h|cpp] ：补全成员函数的实现，也可随意修改接口
+- Value.[h|cpp] ：用于兼容多种数据类型的类，不允许修改
+
+如果发现代码有任何问题，请发邮件到 michelle.py@pku.edu.cn ，24 小时内应答
+面测后需要提交代码包，可能会对代码修改情况、代码与文件之间的契合程度进行抽查和后续的线上沟通。
+
+### 作答进度
+
+1. `2024/12/27`: 由于 Github 对于大文件的限制，不上传数据集至 Github 仓库。开发者请自行在本地准备好数据集。
+
+
+
+### 指导
+
 编译方式（CMakeLists.txt 可随意修改）：
 
 ```bash
