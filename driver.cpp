@@ -112,8 +112,35 @@ bool compareResults(std::vector<std::vector<GPStore::Value>> &result, std::vecto
     return true;
 }
 
-// 加载数据集，根据给定的缩放因子（sf）选择相应的数据目录
-int load_dataset(string sf)
+// 检查文件是否成功打开，如果失败则抛出异常
+void checkOpen(const std::ifstream& fin, const std::string& path) {
+    if (!fin.is_open()) {
+        throw std::runtime_error("Failed to open " + path);
+    }
+}
+
+// 根据属性类型创建GPStore::Value对象
+GPStore::Value* createValue(const std::string& content, const std::string& propsType) {
+    if (propsType.find("ID")!= std::string::npos) {
+        return new GPStore::Value(std::stoll(content));
+    } else if (propsType == "LABEL") {
+        return new GPStore::Value(content);
+    } else if (propsType == "STRING") {
+        return new GPStore::Value(content);
+    } else if (propsType == "LONG") {
+        return new GPStore::Value(std::stoll(content));
+    } else if (propsType == ("STRING[]")) {
+        std::vector<std::string> stringList = split(content, ';');
+        std::vector<GPStore::Value*> valueList;
+        for (auto& item : stringList) {
+            valueList.push_back(new GPStore::Value(item));
+        }
+        return new GPStore::Value(valueList, true);
+    }
+    return nullptr;
+}
+
+void load_node(string sf, std::unordered_map<string,std::vector<string>> nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*> type2Map, std::unordered_map<string, std::unordered_map<string, string>*> type2IDMap)
 {
     string separator = "/";
     string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
@@ -121,7 +148,7 @@ int load_dataset(string sf)
 
     string headersPath, dynamicPath, staticPath;
     string line1;
-    long long nodeId = 0;
+    int nodeId = 0;
 
     // 根据缩放因子选择相应的数据目录
     if(sf=="0.1"){
@@ -135,6 +162,72 @@ int load_dataset(string sf)
         staticPath = bigGraph + separator + "static";
     }
 
+   for (auto& nodeInfo : nodeType2File) {
+        std::string nodeType = nodeInfo.first;
+        bool isDynamic = (nodeInfo.second[0] == "dynamic");
+
+        std::string headerPath = headersPath + separator + nodeInfo.second[0] + separator + nodeInfo.second[1];
+        std::string filePath = (isDynamic? dynamicPath : staticPath) + separator + nodeInfo.second[2];
+
+        std::ifstream finHeader(headerPath);
+        std::ifstream finFile(filePath);
+
+        checkOpen(finHeader, headerPath);
+        checkOpen(finFile, filePath);
+
+        std::vector<std::string> props;
+
+        while (std::getline(finHeader, line1)) {
+            props = split(line1, '|');
+            for (auto& item : props) std::cout << item << " ";
+            std::cout << "\n";
+        }
+
+        while (std::getline(finFile, line1)) {
+            GPStore::Value id(-1);
+            Node node(nodeId++);
+            node.setLabel(nodeType);
+
+            std::vector<std::string> stringContents = split(line1, '|');
+            if (props.size()!= stringContents.size()) {
+                std::cerr << "Props and contents size not equal." << std::endl;
+                return;
+            }
+
+            for (size_t i = 0; i < props.size(); ++i) {
+                size_t pos = props[i].find(":");
+                std::string content = stringContents[i];
+                std::string propsType = props[i].substr(pos + 1);
+
+                GPStore::Value* value = createValue(content, propsType);
+                if (propsType.find("ID")!= std::string::npos) {
+                    id = *value;
+                }
+                node.setValues(props[i], value);
+            }
+
+            if (!isDynamic) {
+                std::string type = node.columns[":LABEL"].toString();
+                type = std::string(1, std::toupper(type[0])) + type.substr(1);
+                if (type!= nodeType) continue;
+            }
+
+            // 添加节点到相应的Map中
+            auto& innerMap = *type2Map[nodeType];
+            auto& innerIDMap = *type2IDMap[nodeType];
+
+            std::string nodeIdStr = std::to_string(node.node_id_);
+            innerMap[std::move(nodeIdStr)] = std::move(node);
+            innerIDMap[id.toString()] = nodeIdStr;
+        }
+
+        std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
+    }
+}
+
+// 加载数据集，根据给定的缩放因子（sf）选择相应的数据目录
+int load_dataset(string sf)
+{
     // 定义节点类型到文件的映射
     std::unordered_map<string,std::vector<string>> nodeType2File={
         {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
@@ -201,9 +294,8 @@ int load_dataset(string sf)
         {"TagClass", &TagClassIDMap},
     };
 
-    // 在这里添加代码以加载数据集文件并将其存储到相应的映射中
-    // 例如，读取文件并解析数据，将其存储到 type2Map 和 type2IDMap 中
-    // ...
+    load_node(sf, nodeType2File, type2Map, type2IDMap);
+
 
     return 0; // 返回0表示成功加载数据集
 }
