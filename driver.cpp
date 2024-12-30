@@ -131,6 +131,45 @@ int load_dataset(string sf)
         dynamicPath = bigGraph + separator + "dynamic";
         staticPath = bigGraph + separator + "static";
     }
+
+    std::unordered_map<string,std::vector<string>> nodeType2File={
+            {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
+            {"Forum",{"dynamic", "Forum.csv", "forum_0_0.csv"}},
+            {"Person",{"dynamic", "Person.csv", "person_0_0.csv"}},
+            {"Post",{"dynamic", "Post.csv", "post_0_0.csv"}},
+
+            {"Organisation",{"static", "Organisation.csv", "organisation_0_0.csv"}},
+            {"Place",{"static", "Place.csv", "place_0_0.csv"}},
+            {"Tag",{"static", "Tag.csv", "tag_0_0.csv"}},
+            {"TagClass",{"static", "TagClass.csv", "tagclass_0_0.csv"}},
+    };
+
+    std::unordered_map<string,std::vector<string>> nodeType2RelationFile={
+        {"Person",{"dynamic", "Person_knows_Person.csv"}},
+        {"Person",{"dynamic", "Person_isLocatedIn_City.csv"}},
+        {"Person",{"dynamic", "Person_studyAt_University.csv"}},
+        {"Person",{"dynamic", "Person_workAt_Company.csv"}},
+        {"Person",{"dynamic", "Person_hasInterest_Tag.csv"}},
+        {"Person",{"dynamic", "Person_likes_Comment.csv"}},
+        {"Person",{"dynamic", "Person_likes_Post.csv"}},
+        {"Comment",{"dynamic", "Comment_hasCreator_Person.csv"}},
+        {"Comment",{"dynamic", "Comment_hasTag_Tag.csv"}},
+        {"Comment",{"dynamic", "Comment_isLocatedIn_Country.csv"}},
+        {"Comment",{"dynamic", "Comment_replyOf_Comment.csv"}},
+        {"Comment",{"dynamic", "Comment_replyOf_Post.csv"}},
+        {"Post",{"dynamic", "Post_hasCreator_Person.csv"}},
+        {"Post",{"dynamic", "Post_hasTag_Tag.csv"}},
+        {"Post",{"dynamic", "Post_isLocatedIn_Country.csv"}},
+        {"Forum",{"dynamic", "Forum_containerOf_Post.csv"}},
+        {"Forum",{"dynamic", "Forum_hasMember_Person.csv"}},
+        {"Forum",{"dynamic", "Forum_hasModerator_Person.csv"}},
+        {"Forum",{"dynamic", "Forum_hasTag_Tag.csv"}},
+        {"Organisation",{"static", "Organisation_isLocatedIn_Place.csv"}},
+        {"Place",{"static", "Place_isPartOf_Place.csv"}},
+        {"Tag",{"static", "Tag_hasType_TagClass.csv"}},
+        {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv"}}
+    };
+
 }
 
 const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
