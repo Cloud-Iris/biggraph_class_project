@@ -3,3 +3,4 @@ social_network-csv_composite-longdateformatter-sf3/
 
 *.o
 driver
+.vscode/
