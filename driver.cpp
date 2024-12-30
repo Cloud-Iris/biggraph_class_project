@@ -170,6 +170,32 @@ int load_dataset(string sf)
         {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv"}}
     };
 
+    std::unordered_map<string, std::unordered_map<string, Node>*> type2Map={
+        {"Person", &PersonMap},
+        {"Comment", &CommentMap},
+        {"Post", &PostMap},
+        {"Forum", &ForumMap},
+
+        {"Organisation", &OrganisationMap},
+        {"Place", &PlaceMap},
+        {"Tag", &TagMap},
+        {"TagClass", &TagClassMap},
+    };
+
+    std::unordered_map<string, std::unordered_map<string, string>*> type2IDMap={
+        {"Person", &PersonIDMap},
+        {"Comment", &CommentIDMap},
+        {"Post", &PostIDMap},
+        {"Forum", &ForumIDMap},
+
+        {"Organisation", &OrganisationIDMap},
+        {"Place", &PlaceIDMap},
+        {"Tag", &TagIDMap},
+        {"TagClass", &TagClassIDMap},
+    };
+
+
+
 }
 
 const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";

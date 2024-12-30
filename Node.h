@@ -35,23 +35,19 @@ class Node {
 // Different node lists, formatted as id2Node
 extern std::unordered_map<std::string, Node> PersonMap;
 extern std::unordered_map<std::string, Node> OrganisationMap;
-extern std::unordered_map<std::string, Node> CityMap;
-extern std::unordered_map<std::string, Node> CompanyMap;
 extern std::unordered_map<std::string, Node> PlaceMap;
-extern std::unordered_map<std::string, Node> UniversityMap;
-extern std::unordered_map<std::string, Node> CountryMap;
-extern std::unordered_map<std::string, Node> MessageMap;
 extern std::unordered_map<std::string, Node> PostMap;
 extern std::unordered_map<std::string, Node> CommentMap;
+extern std::unordered_map<std::string, Node> TagMap;
+extern std::unordered_map<std::string, Node> TagClassMap;
+extern std::unordered_map<std::string, Node> ForumMap;
 
 // Entity ID to global ID mapping for nodes
 extern std::unordered_map<std::string, std::string> PersonIDMap;
 extern std::unordered_map<std::string, std::string> OrganisationIDMap;
-extern std::unordered_map<std::string, std::string> CityIDMap;
-extern std::unordered_map<std::string, std::string> CompanyIDMap;
 extern std::unordered_map<std::string, std::string> PlaceIDMap;
-extern std::unordered_map<std::string, std::string> UniversityIDMap;
-extern std::unordered_map<std::string, std::string> CountryIDMap;
-extern std::unordered_map<std::string, std::string> MessageIDMap;
 extern std::unordered_map<std::string, std::string> PostIDMap;
 extern std::unordered_map<std::string, std::string> CommentIDMap;
+extern std::unordered_map<std::string, std::string> TagIDMap;
+extern std::unordered_map<std::string, std::string> TagClassIDMap;
+extern std::unordered_map<std::string, std::string> ForumIDMap;
