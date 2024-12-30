@@ -134,6 +134,12 @@ int main(int argc, char *argv[]) {
     }
 
     // [FILL HERE] Load the dataset according to the scale factor
+    string dataDir;
+    if (sf == "0.1") {
+        dataDir = DATA_DIR_0_1;
+    } else if (sf == "3") {
+        dataDir = DATA_DIR_3;
+    }
 
     // Repeatedly read test cases from stdin
     string line;

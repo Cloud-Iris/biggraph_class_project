@@ -1,3 +1,4 @@
+#include <iostream>
 #include "PProcedure.h"
 using namespace std;
 const unsigned LIMIT_NUM = 20;
@@ -208,6 +209,7 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 // 给定 ID 为 $personId 的开始人员，检索其名字、姓氏、生日、IP 地址、浏览器和居住城市。
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     Node person_node("Person", "id", &args[0]);
+    cout<<"person_node.node_id_: "+person_node.node_id_<<endl;
     if (person_node.node_id_ == -1)
         return;
     result.emplace_back();

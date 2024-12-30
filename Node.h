@@ -5,6 +5,8 @@
 class Node {
  public:
   unsigned node_id_;
+  const std::string label_string;
+  const std::string prop_string;
 
   Node()=default;
   Node(const std::string& label_string, const std::string& prop_string, const GPStore::Value* value);
