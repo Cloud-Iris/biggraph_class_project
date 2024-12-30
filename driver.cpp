@@ -112,6 +112,27 @@ bool compareResults(std::vector<std::vector<GPStore::Value>> &result, std::vecto
     return true;
 }
 
+int load_dataset(string sf)
+{
+    string separator = "/";
+    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
+    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
+
+    string headersPath, dynamicPath, staticPath;
+    string line1;
+    long long nodeId = 0;
+    if(sf=="0.1"){
+        headersPath = smallGraph + separator + "headers";
+        dynamicPath = smallGraph + separator + "dynamic";
+        staticPath = smallGraph + separator + "static";
+    }
+    else{
+        headersPath = bigGraph + separator + "headers";
+        dynamicPath = bigGraph + separator + "dynamic";
+        staticPath = bigGraph + separator + "static";
+    }
+}
+
 const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
 const string DATA_DIR_3 = "social_network-csv_composite-longdateformatter-sf3/";
 /**
@@ -134,12 +155,7 @@ int main(int argc, char *argv[]) {
     }
 
     // [FILL HERE] Load the dataset according to the scale factor
-    string dataDir;
-    if (sf == "0.1") {
-        dataDir = DATA_DIR_0_1;
-    } else if (sf == "3") {
-        dataDir = DATA_DIR_3;
-    }
+    load_dataset(sf);
 
     // Repeatedly read test cases from stdin
     string line;
