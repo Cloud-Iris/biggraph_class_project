@@ -58,6 +58,11 @@ std::map<long long, std::pair<long long, long long> > &candidates_index, std::ma
     }
 }
 
+/**
+ * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
+ * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
+ * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
+ */
 void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     string first_name = args[1].toString();
     const char* first_name_char = first_name.data();
@@ -158,9 +163,49 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 }
 
+// 给定 ID 为 $personId 的起始 Person，查找来自该 Person 的所有好友（好友节点）的最新消息。
+// 仅考虑在给定$maxDate之前（不包括当天）创建的消息。
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
+    long long person_id = args[0].toLLong();
+    long long max_date = args[1].toLLong();
+    Node person_node("Person", "id", &args[0]);
+    if (person_node.node_id_ == -1)
+        return;
+
+    std::set<std::tuple<long long, std::string, std::string>> messages; // 存储消息，按日期排序
+    std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> friends_list = nullptr; 
+    unsigned list_len = 0;
+
+    // 获取好友列表
+    person_node.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
+    for (unsigned i = 0; i < list_len; ++i) {
+        Node friend_node(friends_list[i]);
+        std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> messages_list = nullptr; 
+        unsigned messages_len = 0;
+
+        // 获取好友的消息列表
+        friend_node.GetLinkedNodes("HAS_POST", messages_list, messages_len, EDGE_OUT);
+        for (unsigned j = 0; j < messages_len; ++j) {
+            Node message_node(messages_list[j]);
+            long long creation_date = message_node["creationDate"]->toLLong();
+            if (creation_date < max_date) {
+                std::string content = message_node["content"]->toString();
+                std::string message_id = message_node["id"]->toString();
+                messages.emplace(creation_date, message_id, content);
+            }
+        }
+    }
+
+    // 将消息添加到结果中
+    for (const auto& msg : messages) {
+        result.emplace_back();
+        result.back().emplace_back(std::get<1>(msg)); // message_id
+        result.back().emplace_back(std::get<2>(msg)); // content
+        result.back().emplace_back(std::get<0>(msg)); // creation_date
+    }
 }
 
+// 给定 ID 为 $personId 的开始人员，检索其名字、姓氏、生日、IP 地址、浏览器和居住城市。
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     Node person_node("Person", "id", &args[0]);
     if (person_node.node_id_ == -1)
