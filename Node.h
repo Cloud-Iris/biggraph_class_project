@@ -5,7 +5,7 @@
 
 class Node {
   public:
-    unsigned node_id_; // Node ID
+    unsigned long long  node_id_; // Node ID
     std::string label_string; // Label of the node
     std::string prop_string; // Properties of the node
     std::unordered_map<std::string,GPStore::Value> columns;  //node的属性
@@ -15,7 +15,7 @@ class Node {
 
     Node()=default; // Default constructor
     Node(const std::string& label_string, const std::string& prop_string, const GPStore::Value* value); // Constructor with parameters
-    Node(unsigned node_id); // Constructor with node ID
+    Node(unsigned long long node_id); // Constructor with node ID
     void Goto(unsigned new_node_id) { // Method to update node ID
       node_id_ = new_node_id;
     }

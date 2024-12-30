@@ -7,7 +7,7 @@ Node::Node(const std::string& label_string, const std::string& prop_string, cons
 
 }
 
-Node::Node(unsigned node_id) {
+Node::Node(unsigned long long node_id) {
     this->node_id_ = node_id;
 }
 

@@ -221,7 +221,7 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>> nodeTyp
             innerIDMap[id.toString()] = nodeIdStr;
         }
 
-        std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
+        // std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
     }
 }
 
