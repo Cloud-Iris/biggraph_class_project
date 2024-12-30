@@ -112,6 +112,7 @@ bool compareResults(std::vector<std::vector<GPStore::Value>> &result, std::vecto
     return true;
 }
 
+// 加载数据集，根据给定的缩放因子（sf）选择相应的数据目录
 int load_dataset(string sf)
 {
     string separator = "/";
@@ -121,6 +122,8 @@ int load_dataset(string sf)
     string headersPath, dynamicPath, staticPath;
     string line1;
     long long nodeId = 0;
+
+    // 根据缩放因子选择相应的数据目录
     if(sf=="0.1"){
         headersPath = smallGraph + separator + "headers";
         dynamicPath = smallGraph + separator + "dynamic";
@@ -132,18 +135,20 @@ int load_dataset(string sf)
         staticPath = bigGraph + separator + "static";
     }
 
+    // 定义节点类型到文件的映射
     std::unordered_map<string,std::vector<string>> nodeType2File={
-            {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
-            {"Forum",{"dynamic", "Forum.csv", "forum_0_0.csv"}},
-            {"Person",{"dynamic", "Person.csv", "person_0_0.csv"}},
-            {"Post",{"dynamic", "Post.csv", "post_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
+        {"Forum",{"dynamic", "Forum.csv", "forum_0_0.csv"}},
+        {"Person",{"dynamic", "Person.csv", "person_0_0.csv"}},
+        {"Post",{"dynamic", "Post.csv", "post_0_0.csv"}},
 
-            {"Organisation",{"static", "Organisation.csv", "organisation_0_0.csv"}},
-            {"Place",{"static", "Place.csv", "place_0_0.csv"}},
-            {"Tag",{"static", "Tag.csv", "tag_0_0.csv"}},
-            {"TagClass",{"static", "TagClass.csv", "tagclass_0_0.csv"}},
+        {"Organisation",{"static", "Organisation.csv", "organisation_0_0.csv"}},
+        {"Place",{"static", "Place.csv", "place_0_0.csv"}},
+        {"Tag",{"static", "Tag.csv", "tag_0_0.csv"}},
+        {"TagClass",{"static", "TagClass.csv", "tagclass_0_0.csv"}},
     };
 
+    // 定义节点类型到关系文件的映射
     std::unordered_map<string,std::vector<string>> nodeType2RelationFile={
         {"Person",{"dynamic", "Person_knows_Person.csv"}},
         {"Person",{"dynamic", "Person_isLocatedIn_City.csv"}},
@@ -170,6 +175,7 @@ int load_dataset(string sf)
         {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv"}}
     };
 
+    // 定义节点类型到节点映射的映射
     std::unordered_map<string, std::unordered_map<string, Node>*> type2Map={
         {"Person", &PersonMap},
         {"Comment", &CommentMap},
@@ -182,6 +188,7 @@ int load_dataset(string sf)
         {"TagClass", &TagClassMap},
     };
 
+    // 定义节点类型到ID映射的映射
     std::unordered_map<string, std::unordered_map<string, string>*> type2IDMap={
         {"Person", &PersonIDMap},
         {"Comment", &CommentIDMap},
@@ -194,8 +201,11 @@ int load_dataset(string sf)
         {"TagClass", &TagClassIDMap},
     };
 
+    // 在这里添加代码以加载数据集文件并将其存储到相应的映射中
+    // 例如，读取文件并解析数据，将其存储到 type2Map 和 type2IDMap 中
+    // ...
 
-
+    return 0; // 返回0表示成功加载数据集
 }
 
 const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
