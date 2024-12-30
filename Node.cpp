@@ -50,3 +50,24 @@ void Node::addRelation(std::string relationName, std::string index, std::string 
     this->relations[relationName].emplace_back(index,propValue);
     this->relationsProp[relationName] = prop;
 }
+
+
+// Different node lists, formatted as id2Node
+std::unordered_map<std::string, Node> PersonMap;
+std::unordered_map<std::string, Node> OrganisationMap;
+std::unordered_map<std::string, Node> PlaceMap;
+std::unordered_map<std::string, Node> PostMap;
+std::unordered_map<std::string, Node> CommentMap;
+std::unordered_map<std::string, Node> TagMap;
+std::unordered_map<std::string, Node> TagClassMap;
+std::unordered_map<std::string, Node> ForumMap;
+
+// Entity ID to global ID mapping for nodes
+std::unordered_map<std::string, std::string> PersonIDMap;
+std::unordered_map<std::string, std::string> OrganisationIDMap;
+std::unordered_map<std::string, std::string> PlaceIDMap;
+std::unordered_map<std::string, std::string> PostIDMap;
+std::unordered_map<std::string, std::string> CommentIDMap;
+std::unordered_map<std::string, std::string> TagIDMap;
+std::unordered_map<std::string, std::string> TagClassIDMap;
+std::unordered_map<std::string, std::string> ForumIDMap;
