@@ -208,24 +208,46 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 
 // 给定 ID 为 $personId 的开始人员，检索其名字、姓氏、生日、IP 地址、浏览器和居住城市。
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
-    auto it = PersonMap.find(args[0].toString());
-    if (it == PersonMap.end()) {
+    auto it1 = PersonIDMap.find(args[0].toString());
+    if (it1 == PersonIDMap.end()) {
         // To Do: Error handling
+        cout<<"PersonIDMap not found"<<endl;
         return;
     }
-    Node person_node = it->second;
-    cout<<args[0].toString()<<"  person_node.node_id_: "<<person_node.node_id_<<endl;
+    auto it2 = PersonMap.find(it1->second);
+    if (it2 == PersonMap.end()) {
+        // To Do: Error handling
+        cout<<"PersonMap not found"<<endl;
+        return;
+    }
+
+    Node person_node = it2->second;
+    // person_node.print();
     if (person_node.node_id_ == -1)
         return;
     result.emplace_back();
     result.back().reserve(8);
-    result.back().emplace_back(*person_node["firstName"]);
-    result.back().emplace_back(*person_node["lastName"]);
-    result.back().emplace_back(*person_node["birthday"]);
-    result.back().emplace_back(*person_node["locationIP"]);
-    result.back().emplace_back(*person_node["browserUsed"]);
-    Node city_node(person_node["PERSON_PLACE"]->toLLong());
-    result.back().emplace_back(*city_node["id"]);
-    result.back().emplace_back(*person_node["gender"]);
-    result.back().emplace_back(*person_node["creationDate"]);
+
+    std::vector<std::string> attributeNames = {
+        "firstName",
+        "lastName",
+        "birthday",
+        "locationIP",
+        "browserUsed",
+        "PERSON_PLACE",
+        "gender",
+        "creationDate"
+    };
+
+    // 打印节点的详细信息
+    std::cout << "columns_size: " << person_node.columns.size() << "\n";
+    for (auto& item : person_node.columns) {
+        std::cout << item.first << ": " << item.second.toString() << "\n";
+        for (auto& attr : attributeNames) {
+            if (item.first.find(attr) != std::string::npos) { // 检查 attr 是否是 item.first 的子串
+                result.back().emplace_back(item.second);
+                break;
+            }
+        }
+    }
 }

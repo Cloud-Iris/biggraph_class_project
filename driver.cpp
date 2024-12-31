@@ -140,7 +140,7 @@ GPStore::Value* createValue(const std::string& content, const std::string& props
     return nullptr;
 }
 
-void load_node(string sf, std::unordered_map<string,std::vector<string>> nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*> type2Map, std::unordered_map<string, std::unordered_map<string, string>*> type2IDMap)
+void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
 {
     string separator = "/";
     string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
@@ -217,8 +217,16 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>> nodeTyp
             auto& innerIDMap = *type2IDMap[nodeType];
 
             std::string nodeIdStr = std::to_string(node.node_id_);
-            innerMap[std::move(nodeIdStr)] = std::move(node);
+            innerMap[nodeIdStr] = node;
             innerIDMap[id.toString()] = nodeIdStr;
+
+            // if(id.toString() == "32985348833679"){
+            //     std::cout << nodeType <<": " << id.toString() << "\n";
+            // }
+            // else if (nodeIdStr == "32985348833679"){
+            //     std::cout << " odeIdStr: " << nodeIdStr << "\n";
+            // }
+            
         }
 
         // std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
@@ -296,6 +304,14 @@ int load_dataset(string sf)
 
     load_node(sf, nodeType2File, type2Map, type2IDMap);
 
+    // test if load successfully
+    // auto it = PersonIDMap.find("32985348833679");
+    // if (it != PersonIDMap.end()) {
+    //     std::cout << "PersonIDMap found" << "\n";
+    // }
+    // else{
+    //     std::cout << "PersonIDMap not found" << "\n";
+    // }
 
     return 0; // 返回0表示成功加载数据集
 }
