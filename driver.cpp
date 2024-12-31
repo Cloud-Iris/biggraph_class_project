@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <stack>
 #include "PProcedure.h"
+#include <regex>
 using namespace std;
 
 void printResults(vector<vector<GPStore::Value>> &result) {
@@ -140,6 +141,31 @@ GPStore::Value* createValue(const std::string& content, const std::string& props
     return nullptr;
 }
 
+// 从属性字符串中解析出类型（fromType或toType），使用正则表达式匹配括号中的内容
+std::string parseTypeFromProp(const std::string& prop) {
+    std::regex pattern(R"(\(([^)]+)\))");
+    std::smatch matches;
+    if (!std::regex_search(prop, matches, pattern)) {
+        throw std::runtime_error("无法从 " + prop + " 中解析出类型");
+    }
+    return matches[1];
+}
+
+// 根据给定的类型和映射容器，获取对应的ID映射和节点映射
+void getMapsByType(const std::string& type,
+                   const std::unordered_map<std::string, std::unordered_map<std::string, std::string>*>& type2IDMap,
+                   const std::unordered_map<std::string, std::unordered_map<std::string, Node>*>& type2Map,
+                   std::unordered_map<std::string, std::string>& fromIDMap,
+                   std::unordered_map<std::string, Node>& fromNodeMap) {
+    auto fromIDMapIt = type2IDMap.find(type);
+    auto fromNodeMapIt = type2Map.find(type);
+    if (fromIDMapIt == type2IDMap.end() || fromNodeMapIt == type2Map.end()) {
+        throw std::runtime_error("找不到类型 " + type + " 对应的映射");
+    }
+    fromIDMap = *fromIDMapIt->second;
+    fromNodeMap = *fromNodeMapIt->second;
+}
+
 void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
 {
     string separator = "/";
@@ -233,6 +259,106 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
     }
 }
 
+void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeType2RelationFile, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
+{
+    string separator = "/";
+    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
+    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
+
+    string headersPath, dynamicPath, staticPath;
+    string line1;
+    int edgeId = 0;
+
+    // 根据缩放因子选择相应的数据目录
+    if(sf=="0.1"){
+        headersPath = smallGraph + separator + "headers";
+        dynamicPath = smallGraph + separator + "dynamic";
+        staticPath = smallGraph + separator + "static";
+    }
+    else{
+        headersPath = bigGraph + separator + "headers";
+        dynamicPath = bigGraph + separator + "dynamic";
+        staticPath = bigGraph + separator + "static";
+    }
+
+    for (auto& nodeInfo : nodeType2RelationFile) {
+        std::string nodeType = nodeInfo.first;
+        bool isDynamic = (nodeInfo.second[0] == "dynamic");
+
+        std::string headerPath = headersPath + separator + nodeInfo.second[0] + separator + nodeInfo.second[1];
+        std::string filePath = (isDynamic? dynamicPath : staticPath) + separator + nodeInfo.second[2];
+
+        std::ifstream finHeader(headerPath);
+        std::ifstream finFile(filePath);
+
+        checkOpen(finHeader, headerPath);
+        checkOpen(finFile, filePath);
+
+        std::vector<std::string> props;
+        std::string fromType, toType, attribute;
+        while (std::getline(finHeader, line1)) {
+            props = split(line1, '|');
+            attribute = "";
+
+            fromType = parseTypeFromProp(props[0]);
+            toType = parseTypeFromProp(props[1]);
+
+            if (props.size() == 3) attribute = props[2];
+
+            std::cout << "fromType: " << fromType << " toType: " << toType << "\n";
+        }
+
+        std::unordered_map<std::string, std::string> fromIDMap, toIDMap;
+        std::unordered_map<std::string, Node> fromNodeMap, toNodeMap;
+        getMapsByType(fromType, type2IDMap, type2Map, fromIDMap, fromNodeMap);
+        getMapsByType(toType, type2IDMap, type2Map, toIDMap, toNodeMap);
+
+        while (std::getline(finFile, line1)) {
+            std::vector<std::string> stringContents = split(line1, '|');
+            if (props.size()!= stringContents.size()) {
+                throw std::runtime_error("第 " + line1 + " 行: 属性数量与内容数量不匹配");
+            }
+            std::string id1 = stringContents[0];
+            std::string id2 = stringContents[1];
+
+            if (fromIDMap.find(id1) == fromIDMap.end()) {
+                throw std::runtime_error("ID: " + id1 + " 不在 " + fromType + " ID Map中");
+            }
+            std::string index1 = fromIDMap[id1];
+
+            if (toIDMap.find(id2) == toIDMap.end()) {
+                throw std::runtime_error("ID: " + id2 + " 不在 " + toType + " ID Map中");
+            }
+            std::string index2 = toIDMap[id2];
+
+            auto fromNodeIt = fromNodeMap.find(index1);
+            if (fromNodeIt == fromNodeMap.end()) {
+                throw std::runtime_error("Index: " + index1 + " 不在 " + fromType + " Map中");
+            }
+            Node fromNode = fromNodeMap[index1];
+
+            auto toNodeIt = toNodeMap.find(index2);
+            if (toNodeIt == toNodeMap.end()) {
+                throw std::runtime_error("Index: " + index2 + " 不在 " + toType + " Map中");
+            }
+            Node toNode = toNodeMap[index2];
+
+            std::string attributeValue;
+            if (props.size() == 3) attributeValue = stringContents[2];
+
+            // 将字符串中的所有字符转换为大写
+            std::string upperFromType = fromType;
+            std::string upperToType = toType;
+            std::transform(upperFromType.begin(), upperFromType.end(), upperFromType.begin(), ::toupper);
+            std::transform(upperToType.begin(), upperToType.end(), upperToType.begin(), ::toupper);
+            std::string relationName = upperFromType + "_" + upperToType;
+
+            // 直接在map中修改节点
+            fromNodeIt->second.addRelation(relationName, index2, attribute, attributeValue);
+        }
+    }
+}
+
 // 加载数据集，根据给定的缩放因子（sf）选择相应的数据目录
 int load_dataset(string sf)
 {
@@ -312,6 +438,8 @@ int load_dataset(string sf)
     // else{
     //     std::cout << "PersonIDMap not found" << "\n";
     // }
+
+    load_edge(sf, nodeType2RelationFile, type2Map, type2IDMap);
 
     return 0; // 返回0表示成功加载数据集
 }
