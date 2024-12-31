@@ -205,8 +205,8 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
 
         while (std::getline(finHeader, line1)) {
             props = split(line1, '|');
-            for (auto& item : props) std::cout << item << " ";
-            std::cout << "\n";
+            // for (auto& item : props) std::cout << item << " ";
+            // std::cout << "\n";
         }
 
         while (std::getline(finFile, line1)) {
@@ -282,6 +282,9 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
     }
 
     for (auto& nodeInfo : nodeType2RelationFile) {
+        for(auto& item : nodeInfo.second){
+            cout<<item<<endl;
+        }
         std::string nodeType = nodeInfo.first;
         bool isDynamic = (nodeInfo.second[0] == "dynamic");
 
@@ -377,29 +380,29 @@ int load_dataset(string sf)
 
     // 定义节点类型到关系文件的映射
     std::unordered_map<string,std::vector<string>> nodeType2RelationFile={
-        {"Person",{"dynamic", "Person_knows_Person.csv"}},
-        {"Person",{"dynamic", "Person_isLocatedIn_City.csv"}},
-        {"Person",{"dynamic", "Person_studyAt_University.csv"}},
-        {"Person",{"dynamic", "Person_workAt_Company.csv"}},
-        {"Person",{"dynamic", "Person_hasInterest_Tag.csv"}},
-        {"Person",{"dynamic", "Person_likes_Comment.csv"}},
-        {"Person",{"dynamic", "Person_likes_Post.csv"}},
-        {"Comment",{"dynamic", "Comment_hasCreator_Person.csv"}},
-        {"Comment",{"dynamic", "Comment_hasTag_Tag.csv"}},
-        {"Comment",{"dynamic", "Comment_isLocatedIn_Country.csv"}},
-        {"Comment",{"dynamic", "Comment_replyOf_Comment.csv"}},
-        {"Comment",{"dynamic", "Comment_replyOf_Post.csv"}},
-        {"Post",{"dynamic", "Post_hasCreator_Person.csv"}},
-        {"Post",{"dynamic", "Post_hasTag_Tag.csv"}},
-        {"Post",{"dynamic", "Post_isLocatedIn_Country.csv"}},
-        {"Forum",{"dynamic", "Forum_containerOf_Post.csv"}},
-        {"Forum",{"dynamic", "Forum_hasMember_Person.csv"}},
-        {"Forum",{"dynamic", "Forum_hasModerator_Person.csv"}},
-        {"Forum",{"dynamic", "Forum_hasTag_Tag.csv"}},
-        {"Organisation",{"static", "Organisation_isLocatedIn_Place.csv"}},
-        {"Place",{"static", "Place_isPartOf_Place.csv"}},
-        {"Tag",{"static", "Tag_hasType_TagClass.csv"}},
-        {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv"}}
+        {"Person",{"dynamic", "Person_knows_Person.csv", "person_knows_person_0_0.csv"}},
+        {"Person",{"dynamic", "Person_isLocatedIn_City.csv", "person_isLocatedIn_place_0_0.csv"}},
+        {"Person",{"dynamic", "Person_studyAt_University.csv", "person_studyAt_organisation_0_0.csv"}},
+        {"Person",{"dynamic", "Person_workAt_Company.csv", "person_workAt_organisation_0_0.csv"}},
+        {"Person",{"dynamic", "Person_hasInterest_Tag.csv", "person_hasInterest_tag_0_0.csv"}},
+        {"Person",{"dynamic", "Person_likes_Comment.csv", "person_likes_comment_0_0.csv"}},
+        {"Person",{"dynamic", "Person_likes_Post.csv", "person_likes_post_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment_hasCreator_Person.csv", "comment_hasCreator_person_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment_hasTag_Tag.csv", "comment_hasTag_tag_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment_isLocatedIn_Country.csv", "comment_isLocatedIn_country_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment_replyOf_Comment.csv", "comment_replyOf_comment_0_0.csv"}},
+        {"Comment",{"dynamic", "Comment_replyOf_Post.csv", "comment_replyOf_post_0_0.csv"}},
+        {"Post",{"dynamic", "Post_hasCreator_Person.csv", "post_hasCreator_person_0_0.csv"}},
+        {"Post",{"dynamic", "Post_hasTag_Tag.csv", "post_hasTag_tag_0_0.csv"}},
+        {"Post",{"dynamic", "Post_isLocatedIn_Country.csv", "post_isLocatedIn_country_0_0.csv"}},
+        {"Forum",{"dynamic", "Forum_containerOf_Post.csv", "forum_containerOf_post_0_0.csv"}},
+        {"Forum",{"dynamic", "Forum_hasMember_Person.csv", "forum_hasMember_person_0_0.csv"}},
+        {"Forum",{"dynamic", "Forum_hasModerator_Person.csv", "forum_hasModerator_person_0_0.csv"}},
+        {"Forum",{"dynamic", "Forum_hasTag_Tag.csv", "forum_hasTag_tag_0_0.csv"}},
+        {"Organisation",{"static", "Organisation_isLocatedIn_Place.csv", "organisation_isLocatedIn_place_0_0.csv"}},
+        {"Place",{"static", "Place_isPartOf_Place.csv", "place_isPartOf_place_0_0.csv"}},
+        {"Tag",{"static", "Tag_hasType_TagClass.csv", "tag_hasType_tagclass_0_0.csv"}},
+        {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
     };
 
     // 定义节点类型到节点映射的映射
