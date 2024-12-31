@@ -59,16 +59,35 @@ std::map<long long, std::pair<long long, long long> > &candidates_index, std::ma
     }
 }
 
+Node GetPersonNode(const std::string &person_id) {
+    auto it = PersonIDMap.find(person_id);
+    if (it == PersonIDMap.end()) {
+        // To Do: Error handling
+        cout<<"PersonIDMap not found"<<endl;
+        return Node(-1);
+    }
+    auto it2 = PersonMap.find(it->second);
+    if (it2 == PersonMap.end()) {
+        // To Do: Error handling
+        cout<<"PersonMap not found"<<endl;
+        return Node(-1);
+    }
+    return it2->second;
+}
+
 /**
  * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
  * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
  * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
+ * input: ic1 32985348834375 Tom
  */
 void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     string first_name = args[1].toString();
     const char* first_name_char = first_name.data();
     unsigned first_name_size = first_name.size();
-    Node person_node("Person", "id", &args[0]);
+
+    Node person_node = GetPersonNode(args[0].toString());
+
     if (person_node.node_id_ == -1)
         return;
     std::set<std::tuple<int, std::string, long long, unsigned> > candidates;
@@ -79,7 +98,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     for (int distance = 0; distance <= 3; distance++) {
         std::vector<TYPE_ENTITY_LITERAL_ID > next_frontier;
         for (const auto& vid : curr_frontier) {
-        Node froniter_person(vid);
+        Node froniter_person=GetPersonNode(vid.to_string());
         bool flag = vid == start_vid;
         flag = flag || (froniter_person["firstName"]->toString() != first_name);
         if (flag) continue;
@@ -166,6 +185,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 
 // 给定 ID 为 $personId 的起始 Person，查找来自该 Person 的所有好友（好友节点）的最新消息。
 // 仅考虑在给定$maxDate之前（不包括当天）创建的消息。
+// input: ic2 15393162789932 1345740969124
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     long long person_id = args[0].toLLong();
     long long max_date = args[1].toLLong();
@@ -207,21 +227,10 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 }
 
 // 给定 ID 为 $personId 的开始人员，检索其名字、姓氏、生日、IP 地址、浏览器和居住城市。
+// input: is1 32985348833679
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
-    auto it1 = PersonIDMap.find(args[0].toString());
-    if (it1 == PersonIDMap.end()) {
-        // To Do: Error handling
-        cout<<"PersonIDMap not found"<<endl;
-        return;
-    }
-    auto it2 = PersonMap.find(it1->second);
-    if (it2 == PersonMap.end()) {
-        // To Do: Error handling
-        cout<<"PersonMap not found"<<endl;
-        return;
-    }
 
-    Node person_node = it2->second;
+    Node person_node = GetPersonNode(args[0].toString());
     person_node.print();
     result.emplace_back();
     result.back().reserve(8);

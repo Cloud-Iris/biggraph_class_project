@@ -348,10 +348,10 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
 
             // 直接在map中修改节点
             citeNode.addRelation(relationName, index2, attribute, attributeValue);
-            if(id1 == "32985348833679"){
-                citeNode.print();
-                cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
-            }
+            // if(id1 == "32985348833679"){
+            //     citeNode.print();
+            //     cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
+            // }
         }
     }
 }
