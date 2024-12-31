@@ -36,7 +36,8 @@ void Node::setValues(const std::string &prop_string, const GPStore::Value *value
 }
 
 void Node::print() {
-    std::cout << "Node_id: " << this->node_id_ << "\n";
+
+    std::cout << "\n\nNode_id: " << this->node_id_ << "\n";
     std::cout << "label_string: " << this->label_string << "\n";
     std::cout << "columns_size: " << this->columns.size() << "\n";
     for(auto& item:this->columns)
@@ -44,11 +45,12 @@ void Node::print() {
     std::cout << "relations_size: " << this->relations.size() << "\n";
     for(auto& item:this->relations)
         std::cout << item.first << "\n";
+    std::cout << "relationsProp_size: " << this->relationsProp.size() << "\n\n\n";
 }
 
 void Node::addRelation(std::string relationName, std::string index, std::string prop, std::string propValue) {
-    this->relations[relationName].emplace_back(index,propValue);
-    this->relationsProp[relationName] = prop;
+    this->relations[relationName].push_back(std::pair<std::string, std::string>(index,propValue));
+    this->relationsProp.push_back(std::pair<std::string, std::string>(relationName, prop));
 }
 
 

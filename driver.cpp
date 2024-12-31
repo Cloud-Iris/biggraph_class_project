@@ -238,22 +238,7 @@ std::string parseTypeFromProp(const std::string& prop) {
     return matches[1];
 }
 
-// 根据给定的类型和映射容器，获取对应的ID映射和节点映射
-void getMapsByType(const std::string& type,
-                   const std::unordered_map<std::string, std::unordered_map<std::string, std::string>*>& type2IDMap,
-                   const std::unordered_map<std::string, std::unordered_map<std::string, Node>*>& type2Map,
-                   std::unordered_map<std::string, std::string>& fromIDMap,
-                   std::unordered_map<std::string, Node>& fromNodeMap) {
-    auto fromIDMapIt = type2IDMap.find(type);
-    auto fromNodeMapIt = type2Map.find(type);
-    if (fromIDMapIt == type2IDMap.end() || fromNodeMapIt == type2Map.end()) {
-        throw std::runtime_error("找不到类型 " + type + " 对应的映射");
-    }
-    fromIDMap = *fromIDMapIt->second;
-    fromNodeMap = *fromNodeMapIt->second;
-}
-
-void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeType2RelationFile, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
+void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& nodeType2RelationFile, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
 {
     string separator = "/";
     string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
@@ -288,6 +273,11 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
         checkOpen(finHeader, headerPath);
         checkOpen(finFile, filePath);
 
+        if(filePath.find("person_isLocatedIn_place_0_0")!=-1)
+        {
+            std::cout << "filePath: " << filePath << "\n";
+        }
+
         std::vector<std::string> props;
         std::string fromType, toType, attribute;
         while (std::getline(finHeader, line1)) {
@@ -302,10 +292,16 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
             // std::cout << "fromType: " << fromType << " toType: " << toType << "\n";
         }
 
-        std::unordered_map<std::string, std::string> fromIDMap, toIDMap;
-        std::unordered_map<std::string, Node> fromNodeMap, toNodeMap;
-        getMapsByType(fromType, type2IDMap, type2Map, fromIDMap, fromNodeMap);
-        getMapsByType(toType, type2IDMap, type2Map, toIDMap, toNodeMap);
+        auto fromIDMapIt = type2IDMap.find(fromType);
+        auto fromNodeMapIt = type2Map.find(fromType);
+        auto toIDMapIt = type2IDMap.find(toType);
+        auto toNodeMapIt = type2Map.find(toType);
+
+
+        auto& fromIDMap = *fromIDMapIt->second;
+        auto& fromNodeMap = *fromNodeMapIt->second;
+        auto& toIDMap = *toIDMapIt->second;
+        auto& toNodeMap = *toNodeMapIt->second;
 
         while (std::getline(finFile, line1)) {
             std::vector<std::string> stringContents = split(line1, '|');
@@ -348,9 +344,14 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
             std::string relationName = upperFromType + "_" + upperToType;
 
             // TODO: fail to add relation
+            Node& citeNode = fromNodeIt->second;
 
             // 直接在map中修改节点
-            fromNodeIt->second.addRelation(relationName, index2, attribute, attributeValue);
+            citeNode.addRelation(relationName, index2, attribute, attributeValue);
+            if(id1 == "32985348833679"){
+                citeNode.print();
+                cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
+            }
         }
     }
 }
@@ -358,6 +359,26 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
 // 加载数据集，根据给定的缩放因子（sf）选择相应的数据目录
 int load_dataset(string sf)
 {
+    string separator = "/";
+    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
+    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
+
+    string headersPath, dynamicPath, staticPath;
+    string line1;
+    int nodeId = 0;
+
+    // 根据缩放因子选择相应的数据目录
+    if(sf=="0.1"){
+        headersPath = smallGraph + separator + "headers";
+        dynamicPath = smallGraph + separator + "dynamic";
+        staticPath = smallGraph + separator + "static";
+    }
+    else{
+        headersPath = bigGraph + separator + "headers";
+        dynamicPath = bigGraph + separator + "dynamic";
+        staticPath = bigGraph + separator + "static";
+    }
+
     // 定义节点类型到文件的映射
     std::unordered_map<string,std::vector<string>> nodeType2File={
         {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
@@ -372,30 +393,30 @@ int load_dataset(string sf)
     };
 
     // 定义节点类型到关系文件的映射
-    std::unordered_map<string,std::vector<string>> nodeType2RelationFile={
-        {"Person",{"dynamic", "Person_knows_Person.csv", "person_knows_person_0_0.csv"}},
-        {"Person",{"dynamic", "Person_isLocatedIn_City.csv", "person_isLocatedIn_place_0_0.csv"}},
-        {"Person",{"dynamic", "Person_studyAt_University.csv", "person_studyAt_organisation_0_0.csv"}},
-        {"Person",{"dynamic", "Person_workAt_Company.csv", "person_workAt_organisation_0_0.csv"}},
-        {"Person",{"dynamic", "Person_hasInterest_Tag.csv", "person_hasInterest_tag_0_0.csv"}},
-        {"Person",{"dynamic", "Person_likes_Comment.csv", "person_likes_comment_0_0.csv"}},
-        {"Person",{"dynamic", "Person_likes_Post.csv", "person_likes_post_0_0.csv"}},
-        {"Comment",{"dynamic", "Comment_hasCreator_Person.csv", "comment_hasCreator_person_0_0.csv"}},
-        {"Comment",{"dynamic", "Comment_hasTag_Tag.csv", "comment_hasTag_tag_0_0.csv"}},
-        {"Comment",{"dynamic", "Comment_isLocatedIn_Country.csv", "comment_isLocatedIn_country_0_0.csv"}},
-        {"Comment",{"dynamic", "Comment_replyOf_Comment.csv", "comment_replyOf_comment_0_0.csv"}},
-        {"Comment",{"dynamic", "Comment_replyOf_Post.csv", "comment_replyOf_post_0_0.csv"}},
-        {"Post",{"dynamic", "Post_hasCreator_Person.csv", "post_hasCreator_person_0_0.csv"}},
-        {"Post",{"dynamic", "Post_hasTag_Tag.csv", "post_hasTag_tag_0_0.csv"}},
-        {"Post",{"dynamic", "Post_isLocatedIn_Country.csv", "post_isLocatedIn_country_0_0.csv"}},
-        {"Forum",{"dynamic", "Forum_containerOf_Post.csv", "forum_containerOf_post_0_0.csv"}},
-        {"Forum",{"dynamic", "Forum_hasMember_Person.csv", "forum_hasMember_person_0_0.csv"}},
-        {"Forum",{"dynamic", "Forum_hasModerator_Person.csv", "forum_hasModerator_person_0_0.csv"}},
-        {"Forum",{"dynamic", "Forum_hasTag_Tag.csv", "forum_hasTag_tag_0_0.csv"}},
-        {"Organisation",{"static", "Organisation_isLocatedIn_Place.csv", "organisation_isLocatedIn_place_0_0.csv"}},
-        {"Place",{"static", "Place_isPartOf_Place.csv", "place_isPartOf_place_0_0.csv"}},
-        {"Tag",{"static", "Tag_hasType_TagClass.csv", "tag_hasType_tagclass_0_0.csv"}},
-        {"TagClass",{"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
+    std::unordered_multimap<string, std::vector<string>> nodeType2RelationFile = {
+        {"Person", {"dynamic", "Person_knows_Person.csv", "person_knows_person_0_0.csv"}},
+        {"Person", {"dynamic", "Person_isLocatedIn_City.csv", "person_isLocatedIn_place_0_0.csv"}},
+        {"Person", {"dynamic", "Person_studyAt_University.csv", "person_studyAt_organisation_0_0.csv"}},
+        {"Person", {"dynamic", "Person_workAt_Company.csv", "person_workAt_organisation_0_0.csv"}},
+        {"Person", {"dynamic", "Person_hasInterest_Tag.csv", "person_hasInterest_tag_0_0.csv"}},
+        {"Person", {"dynamic", "Person_likes_Comment.csv", "person_likes_comment_0_0.csv"}},
+        {"Person", {"dynamic", "Person_likes_Post.csv", "person_likes_post_0_0.csv"}},
+        // {"Comment", {"dynamic", "Comment_hasCreator_Person.csv", "comment_hasCreator_person_0_0.csv"}},
+        // {"Comment", {"dynamic", "Comment_hasTag_Tag.csv", "comment_hasTag_tag_0_0.csv"}},
+        // {"Comment", {"dynamic", "Comment_isLocatedIn_Country.csv", "comment_isLocatedIn_place_0_0.csv"}},
+        // {"Comment", {"dynamic", "Comment_replyOf_Comment.csv", "comment_replyOf_comment_0_0.csv"}},
+        // {"Comment", {"dynamic", "Comment_replyOf_Post.csv", "comment_replyOf_post_0_0.csv"}},
+        // {"Post", {"dynamic", "Post_hasCreator_Person.csv", "post_hasCreator_person_0_0.csv"}},
+        // {"Post", {"dynamic", "Post_hasTag_Tag.csv", "post_hasTag_tag_0_0.csv"}},
+        // {"Post", {"dynamic", "Post_isLocatedIn_Country.csv", "post_isLocatedIn_place_0_0.csv"}},
+        // {"Forum", {"dynamic", "Forum_containerOf_Post.csv", "forum_containerOf_post_0_0.csv"}},
+        // {"Forum", {"dynamic", "Forum_hasMember_Person.csv", "forum_hasMember_person_0_0.csv"}},
+        // {"Forum", {"dynamic", "Forum_hasModerator_Person.csv", "forum_hasModerator_person_0_0.csv"}},
+        // {"Forum", {"dynamic", "Forum_hasTag_Tag.csv", "forum_hasTag_tag_0_0.csv"}},
+        // {"Organisation", {"static", "Organisation_isLocatedIn_Place.csv", "organisation_isLocatedIn_place_0_0.csv"}},
+        // {"Place", {"static", "Place_isPartOf_Place.csv", "place_isPartOf_place_0_0.csv"}},
+        // {"Tag", {"static", "Tag_hasType_TagClass.csv", "tag_hasType_tagclass_0_0.csv"}},
+        // {"TagClass", {"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
     };
 
     // 定义节点类型到节点映射的映射

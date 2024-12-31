@@ -222,27 +222,27 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 
     Node person_node = it2->second;
-    // person_node.print();
-    if (person_node.node_id_ == -1)
-        return;
+    person_node.print();
     result.emplace_back();
     result.back().reserve(8);
 
-    std::vector<std::string> attributeNames = {
+    std::vector<std::string> attributeNames1 = {
         "firstName",
         "lastName",
         "birthday",
         "locationIP",
         "browserUsed",
+    };
+
+    std::vector<std::string> attributeNames2 = {
         "gender",
         "creationDate"
     };
 
     // 打印节点的详细信息
     std::cout << "columns_size: " << person_node.columns.size() << "\n";
-    for (auto& item : person_node.columns) {
-        std::cout << item.first << ": " << item.second.toString() << "\n";
-        for (auto& attr : attributeNames) {
+    for (auto& attr : attributeNames1) {
+        for (auto& item : person_node.columns) {
             if (item.first.find(attr) != std::string::npos) { // 检查 attr 是否是 item.first 的子串
                 result.back().emplace_back(item.second);
                 break;
@@ -251,8 +251,31 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 
     // To Do: Add location city
-    std::cout << "relationsProp.size: " << person_node.relationsProp.size() << "\n";
-    for (auto& item : person_node.relationsProp) {
-        std::cout << item.first << "\n";
+    std::cout << "relations.size: " << person_node.relations.size() << "\n";
+    for (auto& item : person_node.relations) {
+        if(item.first.find("PERSON_PLACE")==-1)
+        {
+            continue;
+        }
+        for(auto& item2 : item.second)
+        {
+            for(auto& item3 : PlaceIDMap)
+            {
+                if(item3.second == item2.first)
+                {
+                    result.back().emplace_back(item3.first);
+                    break;
+                }
+            }
+        }
+    }
+
+    for (auto& attr : attributeNames2) {
+        for (auto& item : person_node.columns) {
+            if (item.first.find(attr) != std::string::npos) { // 检查 attr 是否是 item.first 的子串
+                result.back().emplace_back(item.second);
+                break;
+            }
+        }
     }
 }

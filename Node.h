@@ -11,7 +11,7 @@ class Node {
     std::unordered_map<std::string,GPStore::Value> columns;  //node的属性
 
     std::unordered_map<std::string, std::vector<std::pair<std::string, std::string>>> relations;
-    std::unordered_map<std::string, std::string> relationsProp; //The first string is the relation type, the second string is the ID
+    std::vector<std::pair<std::string, std::string> > relationsProp; //The first string is the relation type, the second string is the ID
 
     Node()=default; // Default constructor
     Node(const std::string& label_string, const std::string& prop_string, const GPStore::Value* value); // Constructor with parameters
