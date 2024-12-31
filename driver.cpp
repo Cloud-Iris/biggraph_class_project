@@ -141,31 +141,6 @@ GPStore::Value* createValue(const std::string& content, const std::string& props
     return nullptr;
 }
 
-// 从属性字符串中解析出类型（fromType或toType），使用正则表达式匹配括号中的内容
-std::string parseTypeFromProp(const std::string& prop) {
-    std::regex pattern(R"(\(([^)]+)\))");
-    std::smatch matches;
-    if (!std::regex_search(prop, matches, pattern)) {
-        throw std::runtime_error("无法从 " + prop + " 中解析出类型");
-    }
-    return matches[1];
-}
-
-// 根据给定的类型和映射容器，获取对应的ID映射和节点映射
-void getMapsByType(const std::string& type,
-                   const std::unordered_map<std::string, std::unordered_map<std::string, std::string>*>& type2IDMap,
-                   const std::unordered_map<std::string, std::unordered_map<std::string, Node>*>& type2Map,
-                   std::unordered_map<std::string, std::string>& fromIDMap,
-                   std::unordered_map<std::string, Node>& fromNodeMap) {
-    auto fromIDMapIt = type2IDMap.find(type);
-    auto fromNodeMapIt = type2Map.find(type);
-    if (fromIDMapIt == type2IDMap.end() || fromNodeMapIt == type2Map.end()) {
-        throw std::runtime_error("找不到类型 " + type + " 对应的映射");
-    }
-    fromIDMap = *fromIDMapIt->second;
-    fromNodeMap = *fromNodeMapIt->second;
-}
-
 void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
 {
     string separator = "/";
@@ -251,6 +226,31 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
 
         // std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
     }
+}
+
+// 从属性字符串中解析出类型（fromType或toType），使用正则表达式匹配括号中的内容
+std::string parseTypeFromProp(const std::string& prop) {
+    std::regex pattern(R"(\(([^)]+)\))");
+    std::smatch matches;
+    if (!std::regex_search(prop, matches, pattern)) {
+        throw std::runtime_error("无法从 " + prop + " 中解析出类型");
+    }
+    return matches[1];
+}
+
+// 根据给定的类型和映射容器，获取对应的ID映射和节点映射
+void getMapsByType(const std::string& type,
+                   const std::unordered_map<std::string, std::unordered_map<std::string, std::string>*>& type2IDMap,
+                   const std::unordered_map<std::string, std::unordered_map<std::string, Node>*>& type2Map,
+                   std::unordered_map<std::string, std::string>& fromIDMap,
+                   std::unordered_map<std::string, Node>& fromNodeMap) {
+    auto fromIDMapIt = type2IDMap.find(type);
+    auto fromNodeMapIt = type2Map.find(type);
+    if (fromIDMapIt == type2IDMap.end() || fromNodeMapIt == type2Map.end()) {
+        throw std::runtime_error("找不到类型 " + type + " 对应的映射");
+    }
+    fromIDMap = *fromIDMapIt->second;
+    fromNodeMap = *fromNodeMapIt->second;
 }
 
 void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeType2RelationFile, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
@@ -347,6 +347,8 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
             std::transform(upperToType.begin(), upperToType.end(), upperToType.begin(), ::toupper);
             std::string relationName = upperFromType + "_" + upperToType;
 
+            // TODO: fail to add relation
+
             // 直接在map中修改节点
             fromNodeIt->second.addRelation(relationName, index2, attribute, attributeValue);
         }
@@ -434,6 +436,8 @@ int load_dataset(string sf)
     // }
 
     load_edge(sf, nodeType2RelationFile, type2Map, type2IDMap);
+
+    cout<<"Data loaded successfully"<<endl;
 
     return 0; // 返回0表示成功加载数据集
 }

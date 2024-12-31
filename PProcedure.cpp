@@ -251,8 +251,8 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 
     // To Do: Add location city
-    std::cout << "relations_size: " << person_node.relations.size() << "\n";
-    for (auto& item : person_node.relations) {
+    std::cout << "relationsProp.size: " << person_node.relationsProp.size() << "\n";
+    for (auto& item : person_node.relationsProp) {
         std::cout << item.first << "\n";
     }
 }
