@@ -234,7 +234,6 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         "birthday",
         "locationIP",
         "browserUsed",
-        "PERSON_PLACE",
         "gender",
         "creationDate"
     };
@@ -250,4 +249,6 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
             }
         }
     }
+
+    // To Do: Add location city
 }
