@@ -231,13 +231,7 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
                 }
                 node.setValues(props[i], value);
             }
-
-            if (!isDynamic) {
-                std::string type = node.columns[":LABEL"].toString();
-                type = std::string(1, std::toupper(type[0])) + type.substr(1);
-                if (type!= nodeType) continue;
-            }
-
+            
             // 添加节点到相应的Map中
             auto& innerMap = *type2Map[nodeType];
             auto& innerIDMap = *type2IDMap[nodeType];
@@ -246,10 +240,10 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
             innerMap[nodeIdStr] = node;
             innerIDMap[id.toString()] = nodeIdStr;
 
-            // if(id.toString() == "32985348833679"){
+            // if(id.toString() == "349"){
             //     std::cout << nodeType <<": " << id.toString() << "\n";
             // }
-            // else if (nodeIdStr == "32985348833679"){
+            // else if (nodeIdStr == "349"){
             //     std::cout << " odeIdStr: " << nodeIdStr << "\n";
             // }
             
@@ -282,9 +276,6 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
     }
 
     for (auto& nodeInfo : nodeType2RelationFile) {
-        for(auto& item : nodeInfo.second){
-            cout<<item<<endl;
-        }
         std::string nodeType = nodeInfo.first;
         bool isDynamic = (nodeInfo.second[0] == "dynamic");
 
@@ -308,7 +299,7 @@ void load_edge(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
 
             if (props.size() == 3) attribute = props[2];
 
-            std::cout << "fromType: " << fromType << " toType: " << toType << "\n";
+            // std::cout << "fromType: " << fromType << " toType: " << toType << "\n";
         }
 
         std::unordered_map<std::string, std::string> fromIDMap, toIDMap;
