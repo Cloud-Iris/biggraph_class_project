@@ -141,7 +141,7 @@ GPStore::Value* createValue(const std::string& content, const std::string& props
     return nullptr;
 }
 
-void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
+void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File)
 {
     string separator = "/";
     string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
@@ -238,7 +238,7 @@ std::string parseTypeFromProp(const std::string& prop) {
     return matches[1];
 }
 
-void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& nodeType2RelationFile, std::unordered_map<string, std::unordered_map<string, Node>*>& type2Map, std::unordered_map<string, std::unordered_map<string, string>*>& type2IDMap)
+void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& nodeType2RelationFile)
 {
     string separator = "/";
     string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
@@ -349,10 +349,10 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
 
             // 直接在map中修改节点
             citeNode.addRelation(relationName, index2, attribute, attributeValue);
-            if(id1 == "32985348833679"){
-                citeNode.print();
-                cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
-            }
+            // if(id1 == "32985348833679"){
+            //     citeNode.print();
+            //     cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
+            // }
         }
     }
 }
@@ -420,33 +420,7 @@ int load_dataset(string sf)
         // {"TagClass", {"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
     };
 
-    // 定义节点类型到节点映射的映射
-    std::unordered_map<string, std::unordered_map<string, Node>*> type2Map={
-        {"Person", &PersonMap},
-        {"Comment", &CommentMap},
-        {"Post", &PostMap},
-        {"Forum", &ForumMap},
-
-        {"Organisation", &OrganisationMap},
-        {"Place", &PlaceMap},
-        {"Tag", &TagMap},
-        {"TagClass", &TagClassMap},
-    };
-
-    // 定义节点类型到ID映射的映射
-    std::unordered_map<string, std::unordered_map<string, string>*> type2IDMap={
-        {"Person", &PersonIDMap},
-        {"Comment", &CommentIDMap},
-        {"Post", &PostIDMap},
-        {"Forum", &ForumIDMap},
-
-        {"Organisation", &OrganisationIDMap},
-        {"Place", &PlaceIDMap},
-        {"Tag", &TagIDMap},
-        {"TagClass", &TagClassIDMap},
-    };
-
-    load_node(sf, nodeType2File, type2Map, type2IDMap);
+    load_node(sf, nodeType2File);
 
     // test if load successfully
     // auto it = PersonIDMap.find("32985348833679");
@@ -457,7 +431,7 @@ int load_dataset(string sf)
     //     std::cout << "PersonIDMap not found" << "\n";
     // }
 
-    load_edge(sf, nodeType2RelationFile, type2Map, type2IDMap);
+    load_edge(sf, nodeType2RelationFile);
 
     cout<<"Data loaded successfully"<<endl;
 

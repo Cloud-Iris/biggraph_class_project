@@ -59,15 +59,21 @@ std::map<long long, std::pair<long long, long long> > &candidates_index, std::ma
     }
 }
 
-Node GetPersonNode(const std::string &person_id) {
-    auto it = PersonIDMap.find(person_id);
-    if (it == PersonIDMap.end()) {
+Node GetNode(std::string idType, const std::string &person_id) {
+    auto IDMapIt = type2IDMap.find(idType);
+    auto& IDMap = *IDMapIt->second;
+
+    auto MapIt = type2Map.find(idType);
+    auto& myMap = *MapIt->second;
+
+    auto it = IDMap.find(person_id);
+    if (it == IDMap.end()) {
         // To Do: Error handling
         cout<<"PersonIDMap not found"<<endl;
         return Node(-1);
     }
-    auto it2 = PersonMap.find(it->second);
-    if (it2 == PersonMap.end()) {
+    auto it2 = myMap.find(it->second);
+    if (it2 == myMap.end()) {
         // To Do: Error handling
         cout<<"PersonMap not found"<<endl;
         return Node(-1);
@@ -86,7 +92,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     const char* first_name_char = first_name.data();
     unsigned first_name_size = first_name.size();
 
-    Node person_node = GetPersonNode(args[0].toString());
+    Node person_node = GetNode("Person", args[0].toString());
 
     if (person_node.node_id_ == -1)
         return;
@@ -117,23 +123,23 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         if (candidates.size() >= LIMIT_NUM || distance == 3) break;
         for (auto vid : curr_frontier) {
         Node froniter_person(vid);
-        std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> friends_list = nullptr; unsigned list_len;
+        std::shared_ptr<const string[]> friends_list = nullptr; unsigned list_len;
         froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
         for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
-            TYPE_ENTITY_LITERAL_ID friend_vid = friends_list[friend_index];
-            if (visited.find(friend_vid) == visited.end()) {
-            visited.emplace(friend_vid);
-            next_frontier.emplace_back(friend_vid);
-            }
+            string friend_vid = friends_list[friend_index];
+            // if (visited.find(friend_vid) == visited.end()) {
+            // visited.emplace(friend_vid);
+            // next_frontier.emplace_back(friend_vid);
+            // }
         }
         friends_list = nullptr;
         froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_IN);
         for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
-            TYPE_ENTITY_LITERAL_ID friend_vid = friends_list[friend_index];
-            if (visited.find(friend_vid) == visited.end()) {
-            visited.emplace(friend_vid);
-            next_frontier.emplace_back(friend_vid);
-            }
+            string friend_vid = friends_list[friend_index];
+            // if (visited.find(friend_vid) == visited.end()) {
+            // visited.emplace(friend_vid);
+            // next_frontier.emplace_back(friend_vid);
+            // }
         }
         friends_list = nullptr;
         }
@@ -190,26 +196,38 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     long long person_id = args[0].toLLong();
     long long max_date = args[1].toLLong();
 
-    Node person_node = GetPersonNode(args[0].toString());
+    Node person_node = GetNode("Person", args[0].toString());
     if (person_node.node_id_ == -1) {
         return;
     }
 
     std::set<std::tuple<long long, std::string, std::string>> messages; // 存储消息，按日期排序
-    std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> friends_list = nullptr; 
+    std::shared_ptr<const string[]> friends_list = nullptr; 
     unsigned list_len = 0;
 
     // 获取好友列表
-    person_node.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
+    person_node.GetLinkedNodes("PERSON_PERSON", friends_list, list_len, EDGE_OUT);
     for (unsigned i = 0; i < list_len; ++i) {
-        Node friend_node(friends_list[i]);
-        std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> messages_list = nullptr; 
+        Node friend_node = GetNode("Person", friends_list[i]);
+        std::shared_ptr<const string[]> messages_list = nullptr; 
         unsigned messages_len = 0;
 
-        // 获取好友的消息列表
-        friend_node.GetLinkedNodes("HAS_POST", messages_list, messages_len, EDGE_OUT);
+        // 获取好友的post列表
+        friend_node.GetLinkedNodes("PERSON_POST", messages_list, messages_len, EDGE_OUT);
         for (unsigned j = 0; j < messages_len; ++j) {
-            Node message_node(messages_list[j]);
+            Node message_node = GetNode("Post", messages_list[j]);
+            long long creation_date = message_node["creationDate"]->toLLong();
+            if (creation_date < max_date) {
+                std::string content = message_node["content"]->toString();
+                std::string message_id = message_node["id"]->toString();
+                messages.emplace(creation_date, message_id, content);
+            }
+        }
+
+        // 获取好友的comment列表
+        friend_node.GetLinkedNodes("PERSON_COMMENT", messages_list, messages_len, EDGE_OUT);
+        for (unsigned j = 0; j < messages_len; ++j) {
+            Node message_node = GetNode("Comment", messages_list[j]);
             long long creation_date = message_node["creationDate"]->toLLong();
             if (creation_date < max_date) {
                 std::string content = message_node["content"]->toString();
@@ -232,8 +250,8 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 // input: is1 32985348833679
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
 
-    Node person_node = GetPersonNode(args[0].toString());
-    person_node.print();
+    Node person_node = GetNode("Person", args[0].toString());
+    // person_node.print();
     result.emplace_back();
     result.back().reserve(8);
 
@@ -251,7 +269,7 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     };
 
     // 打印节点的详细信息
-    std::cout << "columns_size: " << person_node.columns.size() << "\n";
+    // person_node.print();
     for (auto& attr : attributeNames1) {
         for (auto& item : person_node.columns) {
             if (item.first.find(attr) != std::string::npos) { // 检查 attr 是否是 item.first 的子串
@@ -261,8 +279,6 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         }
     }
 
-    // To Do: Add location city
-    std::cout << "relations.size: " << person_node.relations.size() << "\n";
     for (auto& item : person_node.relations) {
         if(item.first.find("PERSON_PLACE")==-1)
         {

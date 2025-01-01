@@ -15,7 +15,7 @@ GPStore::Value* Node::operator[](const std::string& property_string) {
 
 }
 
-void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const unsigned[]>& nodes_list, unsigned& list_len, char edge_dir) {
+void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const std::string[]>& nodes_list, unsigned& list_len, char edge_dir) {
     // 初始化节点列表长度为0
     list_len = 0;
 
@@ -32,9 +32,9 @@ void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const unsi
     list_len = relation_list.size();
 
     // 分配内存并填充节点列表
-    std::shared_ptr<unsigned[]> temp_list(new unsigned[list_len]);
+    std::shared_ptr<std::string[]> temp_list(new std::string[list_len]);
     for (unsigned i = 0; i < list_len; ++i) {
-        temp_list[i] = std::stoul(relation_list[i].first); // 将字符串转换为无符号整数
+        temp_list[i] = relation_list[i].first; // 直接使用字符串
     }
 
     // 将临时列表赋值给输出参数
@@ -66,7 +66,12 @@ void Node::print() {
         std::cout << item.first << ": " << item.second.toString() << "\n";
     std::cout << "relations_size: " << this->relations.size() << "\n";
     for(auto& item:this->relations)
+    {
+        std::cout << "----------------\n";
         std::cout << item.first << "\n";
+        for(auto& item2:item.second)
+            std::cout << item2.first << " " << item2.second << "\n";
+    }
     std::cout << "relationsProp_size: " << this->relationsProp.size() << "\n";
     for(auto& item:this->relationsProp)
         std::cout << item.first << " " << item.second << "\n";
@@ -98,3 +103,29 @@ std::unordered_map<std::string, std::string> CommentIDMap;
 std::unordered_map<std::string, std::string> TagIDMap;
 std::unordered_map<std::string, std::string> TagClassIDMap;
 std::unordered_map<std::string, std::string> ForumIDMap;
+
+// 定义节点类型到节点映射的映射
+std::unordered_map<std::string, std::unordered_map<std::string, Node>*> type2Map={
+    {"Person", &PersonMap},
+    {"Comment", &CommentMap},
+    {"Post", &PostMap},
+    {"Forum", &ForumMap},
+
+    {"Organisation", &OrganisationMap},
+    {"Place", &PlaceMap},
+    {"Tag", &TagMap},
+    {"TagClass", &TagClassMap},
+};
+
+// 定义节点类型到ID映射的映射
+std::unordered_map<std::string, std::unordered_map<std::string, std::string>*> type2IDMap={
+    {"Person", &PersonIDMap},
+    {"Comment", &CommentIDMap},
+    {"Post", &PostIDMap},
+    {"Forum", &ForumIDMap},
+
+    {"Organisation", &OrganisationIDMap},
+    {"Place", &PlaceIDMap},
+    {"Tag", &TagIDMap},
+    {"TagClass", &TagClassIDMap},
+};
