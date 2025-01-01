@@ -136,32 +136,22 @@ GPStore::Value* createValue(const std::string& content, const std::string& props
         for (auto& item : stringList) {
             valueList.push_back(new GPStore::Value(item));
         }
+        // true 表示要进行深拷贝
         return new GPStore::Value(valueList, true);
     }
     return nullptr;
 }
 
-void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeType2File)
-{
-    string separator = "/";
-    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
-    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
-
-    string headersPath, dynamicPath, staticPath;
+void load_node(
+    string sf,
+    string separator,
+    string headersPath,
+    string dynamicPath,
+    string staticPath,
+    std::unordered_map<string,std::vector<string>>& nodeType2File
+) {
     string line1;
     int nodeId = 0;
-
-    // 根据缩放因子选择相应的数据目录
-    if(sf=="0.1"){
-        headersPath = smallGraph + separator + "headers";
-        dynamicPath = smallGraph + separator + "dynamic";
-        staticPath = smallGraph + separator + "static";
-    }
-    else{
-        headersPath = bigGraph + separator + "headers";
-        dynamicPath = bigGraph + separator + "dynamic";
-        staticPath = bigGraph + separator + "static";
-    }
 
    for (auto& nodeInfo : nodeType2File) {
         std::string nodeType = nodeInfo.first;
@@ -178,18 +168,23 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
 
         std::vector<std::string> props;
 
+        // 读入表头，获取属性列表
+        // 以 Person 的表头为例，数据格式为：id:ID(Person)|firstName:STRING|lastName:STRING|gender:STRING|birthday:LONG|creationDate:LONG|locationIP:STRING|browserUsed:STRING|language:STRING[]|email:STRING[]
         while (std::getline(finHeader, line1)) {
             props = split(line1, '|');
             // for (auto& item : props) std::cout << item << " ";
             // std::cout << "\n";
         }
 
+        // 逐行读入节点数据
+        // 以 Person 的数据为例，数据格式为：933|Mahinda|Perera|male|628646400000|1266161530447|119.235.7.103|Firefox|si;en|Mahinda933@boarderzone.com;Mahinda933@hotmail.com;Mahinda933@yahoo.com;Mahinda933@zoho.com
         while (std::getline(finFile, line1)) {
             GPStore::Value id(-1);
-            Node node(nodeId++);
+            Node node(nodeId++);  // 创建一个新的节点，编号从 0 开始
             node.setLabel(nodeType);
 
             std::vector<std::string> stringContents = split(line1, '|');
+            // 核对表头 和 数据 的列数是否一致
             if (props.size()!= stringContents.size()) {
                 std::cerr << "Props and contents size not equal." << std::endl;
                 return;
@@ -201,18 +196,32 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
                 std::string propsType = props[i].substr(pos + 1);
 
                 GPStore::Value* value = createValue(content, propsType);
+                // 如果是 ID 属性，则将该属性的值作为节点的 ID
                 if (propsType.find("ID")!= std::string::npos) {
                     id = *value;
                 }
+                // 以 key-value 的形式存储属性
                 node.setValues(props[i], value);
             }
             
+            // static 中的节点，例如 Place 的形式为：id:ID(Place)|name:STRING|url:STRING|:LABEL，会有一个 :LABEL 属性
+            // if(!isDynamic){
+            //     string type = node.columns[":LABEL"].toString();
+            //     // 把具体数据中的 label 首字母大写，如 country, city 转换为 Country, City
+            //     type = string(1, toupper(type[0])) + type.substr(1);
+            //     // 过滤掉类型不对应的数据
+            //     if (type != nodeType) continue;
+            // }
+
             // 添加节点到相应的Map中
             auto& innerMap = *type2Map[nodeType];
             auto& innerIDMap = *type2IDMap[nodeType];
 
+            // 这里的 id 就是 nodeId 变量
             std::string nodeIdStr = std::to_string(node.node_id_);
+            // { Node 类中的全局 id : 构造好的 Node 对象 }
             innerMap[nodeIdStr] = node;
+            // { 数据中的 ID : Node 类中的全局 id }
             innerIDMap[id.toString()] = nodeIdStr;
 
             // if(id.toString() == "349"){
@@ -238,27 +247,16 @@ std::string parseTypeFromProp(const std::string& prop) {
     return matches[1];
 }
 
-void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& nodeType2RelationFile)
-{
-    string separator = "/";
-    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
-    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
-
-    string headersPath, dynamicPath, staticPath;
+void load_edge(
+    string sf,
+    string separator,
+    string headersPath,
+    string dynamicPath,
+    string staticPath,
+    std::unordered_multimap<string,std::vector<string>>& nodeType2RelationFile
+) {
     string line1;
     int edgeId = 0;
-
-    // 根据缩放因子选择相应的数据目录
-    if(sf=="0.1"){
-        headersPath = smallGraph + separator + "headers";
-        dynamicPath = smallGraph + separator + "dynamic";
-        staticPath = smallGraph + separator + "static";
-    }
-    else{
-        headersPath = bigGraph + separator + "headers";
-        dynamicPath = bigGraph + separator + "dynamic";
-        staticPath = bigGraph + separator + "static";
-    }
 
     for (auto& nodeInfo : nodeType2RelationFile) {
         std::string nodeType = nodeInfo.first;
@@ -280,6 +278,9 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
         // }
 
         std::vector<std::string> props;
+
+        // 读入表头，获取属性列表
+        // 以 Person_knows_Person 的表头为例，数据格式为：:START_ID(Person)|:END_ID(Person)|creationDate:LONG
         std::string fromType, toType, attribute;
         while (std::getline(finHeader, line1)) {
             props = split(line1, '|');
@@ -304,8 +305,11 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
         auto& toIDMap = *toIDMapIt->second;
         auto& toNodeMap = *toNodeMapIt->second;
 
+        // 逐行读入节点数据
+        // 以 Person_knows_Person 的数据为例，数据格式为：933|2199023256077|1271939457947
         while (std::getline(finFile, line1)) {
             std::vector<std::string> stringContents = split(line1, '|');
+            // 核对表头 和 数据 的列数是否一致
             if (props.size()!= stringContents.size()) {
                 throw std::runtime_error("第 " + line1 + " 行: 属性数量与内容数量不匹配");
             }
@@ -361,8 +365,9 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
 int load_dataset(string sf)
 {
     string separator = "/";
-    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1" + separator + "social_network-csv_composite-longdateformatter-sf0.1";
-    string bigGraph = "social_network-csv_composite-longdateformatter-sf3" + separator + "social_network-csv_composite-longdateformatter-sf3";
+    // 当前目录下的两个数据集
+    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1";
+    string bigGraph = "social_network-csv_composite-longdateformatter-sf3";
 
     string headersPath, dynamicPath, staticPath;
     string line1;
@@ -381,7 +386,9 @@ int load_dataset(string sf)
     }
 
     // 定义节点类型到文件的映射
+    // 以 节点类型 为键，值为一个vector，包含了 动态/静态、节点 的表头文件、具体的节点数据文件
     std::unordered_map<string,std::vector<string>> nodeType2File={
+        // NOTE: LDBC SNB 数据库生成的数据集中，节点对应的文件名是：[节点类型]_0_0.csv
         {"Comment",{"dynamic", "Comment.csv", "comment_0_0.csv"}},
         {"Forum",{"dynamic", "Forum.csv", "forum_0_0.csv"}},
         {"Person",{"dynamic", "Person.csv", "person_0_0.csv"}},
@@ -393,8 +400,10 @@ int load_dataset(string sf)
         {"TagClass",{"static", "TagClass.csv", "tagclass_0_0.csv"}},
     };
 
-    // 定义节点类型到关系文件的映射
+    // 定义节点类型到 以节点为起点的关系 文件的映射
+    // 以 节点类型 为键，值为一个vector，包含了 动态/静态、以节点为起点的关系 的表头文件、具体的关系数据文件
     std::unordered_multimap<string, std::vector<string>> nodeType2RelationFile = {
+        // NOTE: LDBC SNB 数据库生成的数据集中，关系对应的文件名是：[关系]_0_0.csv
         {"Person", {"dynamic", "Person_knows_Person.csv", "person_knows_person_0_0.csv"}},
         {"Person", {"dynamic", "Person_isLocatedIn_City.csv", "person_isLocatedIn_place_0_0.csv"}},
         {"Person", {"dynamic", "Person_studyAt_University.csv", "person_studyAt_organisation_0_0.csv"}},
@@ -420,7 +429,7 @@ int load_dataset(string sf)
         // {"TagClass", {"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
     };
 
-    load_node(sf, nodeType2File);
+    load_node(sf, separator, headersPath, dynamicPath, staticPath, nodeType2File);
 
     // test if load successfully
     // auto it = PersonIDMap.find("32985348833679");
@@ -431,21 +440,12 @@ int load_dataset(string sf)
     //     std::cout << "PersonIDMap not found" << "\n";
     // }
 
-    load_edge(sf, nodeType2RelationFile);
+    load_edge(sf, separator, headersPath, dynamicPath, staticPath, nodeType2RelationFile);
 
     cout<<"Data loaded successfully"<<endl;
 
     return 0; // 返回0表示成功加载数据集
 }
-
-const string DATA_DIR_0_1 = "social_network-csv_composite-longdateformatter-sf0.1/";
-const string DATA_DIR_3 = "social_network-csv_composite-longdateformatter-sf3/";
-/**
- * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
- * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
- * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
- */
-
 
 
 int main(int argc, char *argv[]) {
@@ -461,6 +461,8 @@ int main(int argc, char *argv[]) {
 
     // [FILL HERE] Load the dataset according to the scale factor
     load_dataset(sf);
+    // 调试代码，仅仅查看是否成功加载数据集
+    return 0;
 
     // Repeatedly read test cases from stdin
     string line;
