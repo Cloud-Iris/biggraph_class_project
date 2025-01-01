@@ -67,12 +67,15 @@ void Node::print() {
     std::cout << "relations_size: " << this->relations.size() << "\n";
     for(auto& item:this->relations)
         std::cout << item.first << "\n";
-    std::cout << "relationsProp_size: " << this->relationsProp.size() << "\n\n\n";
+    std::cout << "relationsProp_size: " << this->relationsProp.size() << "\n";
+    for(auto& item:this->relationsProp)
+        std::cout << item.first << " " << item.second << "\n";
+    std::cout<<"\n\n";
 }
 
 void Node::addRelation(std::string relationName, std::string index, std::string prop, std::string propValue) {
     this->relations[relationName].push_back(std::pair<std::string, std::string>(index,propValue));
-    this->relationsProp.push_back(std::pair<std::string, std::string>(relationName, prop));
+    this->relationsProp[relationName] = prop;
 }
 
 

@@ -216,7 +216,7 @@ void load_node(string sf, std::unordered_map<string,std::vector<string>>& nodeTy
             innerIDMap[id.toString()] = nodeIdStr;
 
             // if(id.toString() == "349"){
-            //     std::cout << nodeType <<": " << id.toString() << "\n";
+            //     node.print();
             // }
             // else if (nodeIdStr == "349"){
             //     std::cout << " odeIdStr: " << nodeIdStr << "\n";
@@ -273,10 +273,11 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
         checkOpen(finHeader, headerPath);
         checkOpen(finFile, filePath);
 
-        if(filePath.find("person_isLocatedIn_place_0_0")!=-1)
-        {
-            std::cout << "filePath: " << filePath << "\n";
-        }
+        // // check if all files are loaded
+        // if(filePath.find("person_isLocatedIn_place_0_0")!=-1)
+        // {
+        //     std::cout << "filePath: " << filePath << "\n";
+        // }
 
         std::vector<std::string> props;
         std::string fromType, toType, attribute;
@@ -348,10 +349,10 @@ void load_edge(string sf, std::unordered_multimap<string,std::vector<string>>& n
 
             // 直接在map中修改节点
             citeNode.addRelation(relationName, index2, attribute, attributeValue);
-            // if(id1 == "32985348833679"){
-            //     citeNode.print();
-            //     cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
-            // }
+            if(id1 == "32985348833679"){
+                citeNode.print();
+                cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
+            }
         }
     }
 }
