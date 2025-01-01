@@ -98,7 +98,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     for (int distance = 0; distance <= 3; distance++) {
         std::vector<TYPE_ENTITY_LITERAL_ID > next_frontier;
         for (const auto& vid : curr_frontier) {
-        Node froniter_person=GetPersonNode(vid.to_string());
+        Node froniter_person(vid);
         bool flag = vid == start_vid;
         flag = flag || (froniter_person["firstName"]->toString() != first_name);
         if (flag) continue;
@@ -189,9 +189,11 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     long long person_id = args[0].toLLong();
     long long max_date = args[1].toLLong();
-    Node person_node("Person", "id", &args[0]);
-    if (person_node.node_id_ == -1)
+
+    Node person_node = GetPersonNode(args[0].toString());
+    if (person_node.node_id_ == -1) {
         return;
+    }
 
     std::set<std::tuple<long long, std::string, std::string>> messages; // 存储消息，按日期排序
     std::shared_ptr<const TYPE_ENTITY_LITERAL_ID[]> friends_list = nullptr; 

@@ -16,7 +16,29 @@ GPStore::Value* Node::operator[](const std::string& property_string) {
 }
 
 void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const unsigned[]>& nodes_list, unsigned& list_len, char edge_dir) {
+    // 初始化节点列表长度为0
+    list_len = 0;
 
+    // 检查关系是否存在
+    auto it = this->relations.find(pre_str);
+    if (it == this->relations.end()) {
+        return; // 如果关系不存在，直接返回
+    }
+
+    // 获取关系列表
+    const auto& relation_list = it->second;
+
+    // 计算节点列表长度
+    list_len = relation_list.size();
+
+    // 分配内存并填充节点列表
+    std::shared_ptr<unsigned[]> temp_list(new unsigned[list_len]);
+    for (unsigned i = 0; i < list_len; ++i) {
+        temp_list[i] = std::stoul(relation_list[i].first); // 将字符串转换为无符号整数
+    }
+
+    // 将临时列表赋值给输出参数
+    nodes_list = temp_list;
 }
 
 void Node::GetLinkedNodesWithEdgeProps(const std::string& pre_str, std::shared_ptr<const unsigned[]>& nodes_list, std::shared_ptr<const long long[]>& prop_list,
