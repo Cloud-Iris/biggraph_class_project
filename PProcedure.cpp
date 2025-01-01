@@ -232,9 +232,11 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 
         // 获取好友的post列表
         friend_node.GetLinkedNodes("PERSON_POST", messages_list, messages_len, EDGE_OUT);
+        cout<< " messages_len: "<<messages_len<<endl;
         for (unsigned j = 0; j < messages_len; ++j) {
             Node message_node = GetNodeFromGlobalID("Post", messages_list[j]);
             long long creation_date = message_node["creationDate"]->toLLong();
+            cout<<" creation_date: "<<creation_date<<endl;
             if (creation_date < max_date) {
                 std::string content = message_node["content"]->toString();
                 std::string message_id = message_node["id"]->toString();
@@ -255,12 +257,20 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         }
     }
 
+    for(auto& item : messages)
+    {
+        cout<<std::get<0>(item)<<" "<<std::get<1>(item)<<" "<<std::get<2>(item)<<endl;
+    }
+
     // 将消息添加到结果中
+    int count = 0;
     for (const auto& msg : messages) {
+        if (count >= 20) break;
         result.emplace_back();
         result.back().emplace_back(std::get<1>(msg)); // message_id
         result.back().emplace_back(std::get<2>(msg)); // content
         result.back().emplace_back(std::get<0>(msg)); // creation_date
+        count++;
     }
 }
 
