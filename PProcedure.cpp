@@ -99,6 +99,20 @@ Node GetNodeFromGlobalID(std::string idType, const std::string &person_id) {
  * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
  * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
  * input: ic1 32985348834375 Tom
+ * 
+ * 涉及到的节点类型：Person, Place(:LABEL=country, city), Organisation(:LABEL=university, company)
+ *  1. Place 有 3 种 LABEL: country, city, continent，这里只涉及到 country 和 city
+ *  2. Organisation 有 2 中 LABEL: university, company
+ * 涉及到的关系类型：person_knows_person, person_isLocatedIn_place, organisation_isLocatedIn_place, place_isPartOf_place
+ *  1. person_knows_person。对应表头文件：Person_knows_Person
+ * --- 以下是检索到认识的人需要的信息 ---
+ *  2. person_isLocatedIn_place。对应表头文件：Person_isLocatedIn_City
+ *  3. person_workAt_organisation。对应表头文件：Person_workAt_Company
+ *      3.1 如果这个人存在工作的公司，则还要找到这个公司所在的国家。
+ *          关系：organisation_isLocatedIn_place。对应表头文件：Organisation_isLocatedIn_Place
+ *  4. person_studyAt_organisation。对应表头文件：Person_studyAt_University
+ *      4.1 如果这个人存在学习的学校，则还要找到这个学校所在的城市。
+ *          关系：organisation_isLocatedIn_place。对应表头文件：Organisation_isLocatedIn_Place
  */
 void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     // string first_name = args[1].toString();
