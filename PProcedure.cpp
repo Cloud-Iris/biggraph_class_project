@@ -357,7 +357,16 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     // 将结果添加到result中
     for (const auto& message : messages) {
         result.emplace_back();
-        const auto& [friend_id, first_name, last_name, message_id, content, creation_date] = message.second;
+        // 取消 C++ 14 引入的结构化绑定，改用 std::get
+        // const auto& [friend_id, first_name, last_name, message_id, content, creation_date] = message.second;
+        const auto& tuple = message.second;
+        long long friend_id = std::get<0>(tuple);
+        const std::string& first_name = std::get<1>(tuple);
+        const std::string& last_name = std::get<2>(tuple);
+        long long message_id = std::get<3>(tuple);
+        const std::string& content = std::get<4>(tuple);
+        long long creation_date = std::get<5>(tuple);
+
         result.back().emplace_back(friend_id);    // personId
         result.back().emplace_back(first_name);   // firstName
         result.back().emplace_back(last_name);    // lastName
