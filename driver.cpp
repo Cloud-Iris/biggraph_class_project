@@ -337,12 +337,12 @@ void load_edge(
             Node& toNodeRef = toNodeIt->second;
             // 直接在map中修改节点
             fromNodeRef.addRelation(relationName, index2, attribute, attributeValue);
-            // 如果是 PERSON_PERSON 关系，则需要在 toNode 中也添加关系，形成双向关系
+            // 如果是 PERSON_KNOWS_PERSON 关系，则需要在 toNode 中也添加关系，形成双向关系
             if (relationName == "PERSON_KNOWS_PERSON") {
                 toNodeRef.addRelation(relationName, index1, attribute, attributeValue);
             }
 
-            // 在处理边的时候，对于Post和Comment的创建者关系，建立反向关系
+            // 在处理边的时候，对于 Post 和 Comment 的创建者关系，建立反向关系，便于从 Person 出边查询
             if (relationName == "POST_HASCREATOR_PERSON") {
                 // toNode是Person，fromNode是Post
                 toNodeRef.addRelation("PERSON_CREATED_POST", index1, attribute, attributeValue);
@@ -497,7 +497,7 @@ int main(int argc, char *argv[]) {
                         args.emplace_back(personId);
                         is1(args, result);
                     }
-                    printResults(result);
+                    // printResults(result);
                     getline(fin, line);
                     // 3 种文件都会有一个数字，表示接下来数据的行数
                     int numRows = stoi(line);

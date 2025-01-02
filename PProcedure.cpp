@@ -93,7 +93,7 @@ Node GetNodeByGlobalID(std::string node_type, const std::string &global_id) {
 
 /**
  * ic1  input: $personId $firstName
- * 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
+ * 给定 ID 为 $personId 的起始 Person，查找该 Person 直接或者间接认识(knows)的人 (<= 3 steps)
  * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的 13 种信息
  * 
  * 涉及到的节点类型：Person, Place(:LABEL=country, city), Organisation(:LABEL=university, company)
@@ -109,6 +109,8 @@ Node GetNodeByGlobalID(std::string node_type, const std::string &global_id) {
  *  4. person_studyAt_organisation。对应表头文件：Person_studyAt_University
  *      4.1 如果这个人存在学习的学校，则还要找到这个学校所在的城市。
  *          关系：organisation_isLocatedIn_place。对应表头文件：Organisation_isLocatedIn_Place
+ * 
+ * 说明：在建立关系边的时候，person_knows_person 是双向建立的。
  * 
  * 结果要求：
  * 排序：按照 distance 从小到大排序，按照 last name 字典序排序，按照 person_id 从小到大排序
@@ -284,9 +286,21 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 }
 
-// 给定 ID 为 $personId 的起始 Person，查找来自该 Person 的所有好友（好友节点）的最新消息。
-// 仅考虑在给定$maxDate之前（不包括当天）创建的消息。
-// input: ic2 15393162789932 1345740969124
+/**
+ * ic2  input: $personId $maxDate
+ * 给定 ID 为 $personId 的起始 Person，查找来自该 Person 直接认识(knows)的人的最新消息。
+ * 仅考虑在给定$maxDate之前（不包括当天）创建的消息。
+ * 
+ * 涉及到的节点类型：Person, Post, Comment
+ * 
+ * 说明：和 ic1 类似的，在建立关系边的时候，基于 Post_hasCreator_Person 关系，建立了反向关系 PERSON_CREATED_POST；
+ * 基于 Comment_hasCreator_Person 关系，建立了反向关系 PERSON_CREATED_COMMENT。
+ * 这样我们可以通过 Person 节点的反向关系，直接找到该 Person 创建的 Post 和 Comment。
+ * 
+ * 结果要求：
+ * 排序：按照 -creation_date 将日期逆序排列（新的帖子在前），再按照 message.id 顺序排序
+ * 最多返回 20 个结果
+ */
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     // 获取输入参数
     long long person_id = args[0].toLLong();
@@ -297,7 +311,12 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     if (person_node.node_id_ == -1) return;
 
     // 用于存储结果的map，key为创建时间（用于排序）
-    std::map<std::pair<long long, long long>, std::tuple<long long, std::string, std::string, long long, std::string, long long>> messages;
+    std::map<
+        // 创建日期和消息 ID 组成的复合键
+        std::pair<long long, long long>,
+        // 直接朋友（消息创建者）的 id、firstName、lastName、messageId、content/imagefile、creationDate
+        std::tuple<long long, std::string, std::string, long long, std::string, long long>
+    > messages;
     
     // 获取所有好友
     std::vector<std::string> friends_list;
@@ -314,7 +333,8 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         std::string firstName = friend_node.columns["firstName:STRING"].toString();
         std::string lastName = friend_node.columns["lastName:STRING"].toString();
 
-        // 处理该好友创建的所有Post
+        // 处理该好友创建的所有 Post
+        // 我们在建立关系边的时候，基于 Post_hasCreator_Person 关系，建立了反向关系 PERSON_CREATED_POST
         for (const auto& post_pair : friend_node.relations["PERSON_CREATED_POST"]) {
             Node post = GetNodeByGlobalID("Post", post_pair.first);
             if (post.node_id_ == -1) continue;
@@ -338,7 +358,8 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
                 friend_person_id, firstName, lastName, message_id, content, creation_date);
         }
 
-        // 处理该好友创建的所有Comment
+        // 处理该好友创建的所有 Comment
+        // 我们在建立关系边的时候，基于 Comment_hasCreator_Person 关系，建立了反向关系 PERSON_CREATED_COMMENT
         for (const auto& comment_pair : friend_node.relations["PERSON_CREATED_COMMENT"]) {
             Node comment = GetNodeByGlobalID("Comment", comment_pair.first);
             if (comment.node_id_ == -1) continue;
@@ -378,8 +399,15 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 }
 
-// 给定 ID 为 $personId 的开始人员，检索其名字、姓氏、生日、IP 地址、浏览器和居住城市。
-// input: is1 32985348833679
+/**
+ * is1  input: $personId
+ * 给定 ID 为 $personId 的起始 Person，查找该 Person 的信息：
+ * firstName, lastName, birthday, locationIP, browserUsed, 居住的城市, 性别gender, 数据创建日期creationDate
+ * 
+ * 涉及到的节点类型：Person, Place(:LABEL=city)
+ * 
+ * 结果要求：无排序和个数要求
+ */
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
 
     Node person_node = GetNodeByEntityID("Person", args[0].toString());
@@ -412,16 +440,10 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 
     for (auto& item : person_node.relations) {
-        if(item.first.find("PERSON_ISLOCATEDIN_CITY")==-1)
-        {
-            continue;
-        }
-        for(auto& item2 : item.second)
-        {
-            for(auto& item3 : PlaceIDMap)
-            {
-                if(item3.second == item2.first)
-                {
+        if(item.first.find("PERSON_ISLOCATEDIN_CITY")==-1) continue;
+        for(auto& item2 : item.second) {
+            for(auto& item3 : PlaceIDMap) {
+                if(item3.second == item2.first) {
                     result.back().emplace_back(item3.first);
                     break;
                 }
