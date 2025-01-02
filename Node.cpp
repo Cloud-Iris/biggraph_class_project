@@ -15,11 +15,13 @@ GPStore::Value* Node::operator[](const std::string& property_string) {
 
 }
 
-// 根据关系名在 节点的 relations 中进行查找，返回从节点出发，用 pre_str 关系 指向的节点的全局 id 列表
+// 根据关系名在 节点的 relations 中进行查找，返回
+// 从调用该方法的节点出发，关系为pre_str 的 节点的全局 id 字符串列表
 // 边的方向 edge_dir 暂时不用
-void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const std::string[]>& nodes_list, unsigned& list_len, char edge_dir) {
+void Node::GetLinkedNodes(const std::string& pre_str, std::vector<std::string>& nodes_list, unsigned& list_len, char edge_dir) {
     // 初始化节点列表长度为0
     list_len = 0;
+    nodes_list.clear();
 
     // 检查关系是否存在
     auto it = this->relations.find(pre_str);
@@ -33,14 +35,11 @@ void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const std:
     // 计算节点列表长度
     list_len = relation_list.size();
 
-    // 分配内存并填充节点列表
-    std::shared_ptr<std::string[]> temp_list(new std::string[list_len]);
+    // 填充节点列表
+    nodes_list.reserve(list_len);
     for (unsigned i = 0; i < list_len; ++i) {
-        temp_list[i] = relation_list[i].first; // 节点的全局 id
+        nodes_list.push_back(relation_list[i].first);
     }
-
-    // 将临时列表赋值给输出参数
-    nodes_list = temp_list;
 }
 
 void Node::GetLinkedNodesWithEdgeProps(const std::string& pre_str, std::shared_ptr<const unsigned[]>& nodes_list, std::shared_ptr<const long long[]>& prop_list,

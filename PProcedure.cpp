@@ -59,12 +59,12 @@ std::map<long long, std::pair<long long, long long> > &candidates_index, std::ma
     }
 }
 
-Node GetNode(std::string node_type, const std::string &data_id) {
+Node GetNodeByEntityID(std::string node_type, const std::string &entity_id) {
     auto& IDMap = *(type2IDMap.find(node_type)->second);
     auto& myMap = *(type2Map.find(node_type)->second);
 
     // 根据 数据实体 id 获取 Node 类的全局 id
-    auto it = IDMap.find(data_id);
+    auto it = IDMap.find(entity_id);
     if (it == IDMap.end()) {
         cout<<"PersonIDMap not found"<<endl;
         return Node(-1);
@@ -120,7 +120,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     const char* first_name_char = first_name.data();
     unsigned first_name_size = first_name.size();
     // 参数是 数据实体 id，找到 参数对应的 Person 节点
-    Node person_node = GetNode("Person", args[0].toString());
+    Node person_node = GetNodeByEntityID("Person", args[0].toString());
     // person_node.print();
 
     if (person_node.node_id_ == -1)
@@ -170,8 +170,9 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         for (auto vid : curr_frontier) {
             // Node froniter_person(vid);
             Node froniter_person = GetNodeByGlobalID("Person", std::to_string(vid));
-            std::shared_ptr<const string[]> friends_list = nullptr; unsigned list_len;
+            // std::shared_ptr<const string[]> friends_list = nullptr; unsigned list_len;
             // froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
+            std::vector<std::string> friends_list; unsigned list_len;
             froniter_person.GetLinkedNodes("PERSON_KNOWS_PERSON", friends_list, list_len, EDGE_OUT);
 
             for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
@@ -295,27 +296,34 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     long long person_id = args[0].toLLong();
     long long max_date = args[1].toLLong();
 
-    Node person_node = GetNode("Person", args[0].toString());
+    Node person_node = GetNodeByEntityID("Person", args[0].toString());
     if (person_node.node_id_ == -1) {
         return;
     }
 
     std::set<std::tuple<long long, std::string, std::string>> messages; // 存储消息，按日期排序
-    std::shared_ptr<const string[]> friends_list = nullptr; 
+    std::vector<std::string> friends_list; 
     unsigned list_len = 0;
 
-    // 获取好友列表
+    // get list of friends
     person_node.GetLinkedNodes("PERSON_PERSON", friends_list, list_len, EDGE_OUT);
+    // // Ensure that the friends_id is global id.
+    // for(auto& item : friends_list)
+    // {
+    //     cout<<item<<endl;
+    // }
     for (unsigned i = 0; i < list_len; ++i) {
-        Node friend_node = GetNode("Person", friends_list[i]);
-        std::shared_ptr<const string[]> messages_list = nullptr; 
+        Node friend_node = GetNodeByGlobalID("Person", friends_list[i]);
+        std::vector<std::string> messages_list; 
         unsigned messages_len = 0;
 
         // 获取好友的post列表
         friend_node.GetLinkedNodes("PERSON_POST", messages_list, messages_len, EDGE_OUT);
+        cout<< " messages_len: "<<messages_len<<endl;
         for (unsigned j = 0; j < messages_len; ++j) {
-            Node message_node = GetNode("Post", messages_list[j]);
+            Node message_node = GetNodeByGlobalID("Post", messages_list[j]);
             long long creation_date = message_node["creationDate"]->toLLong();
+            cout<<" creation_date: "<<creation_date<<endl;
             if (creation_date < max_date) {
                 std::string content = message_node["content"]->toString();
                 std::string message_id = message_node["id"]->toString();
@@ -326,7 +334,7 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         // 获取好友的comment列表
         friend_node.GetLinkedNodes("PERSON_COMMENT", messages_list, messages_len, EDGE_OUT);
         for (unsigned j = 0; j < messages_len; ++j) {
-            Node message_node = GetNode("Comment", messages_list[j]);
+            Node message_node = GetNodeByGlobalID("Comment", messages_list[j]);
             long long creation_date = message_node["creationDate"]->toLLong();
             if (creation_date < max_date) {
                 std::string content = message_node["content"]->toString();
@@ -336,12 +344,20 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         }
     }
 
+    for(auto& item : messages)
+    {
+        cout<<std::get<0>(item)<<" "<<std::get<1>(item)<<" "<<std::get<2>(item)<<endl;
+    }
+
     // 将消息添加到结果中
+    int count = 0;
     for (const auto& msg : messages) {
+        if (count >= 20) break;
         result.emplace_back();
         result.back().emplace_back(std::get<1>(msg)); // message_id
         result.back().emplace_back(std::get<2>(msg)); // content
         result.back().emplace_back(std::get<0>(msg)); // creation_date
+        count++;
     }
 }
 
@@ -349,7 +365,7 @@ void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 // input: is1 32985348833679
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
 
-    Node person_node = GetNode("Person", args[0].toString());
+    Node person_node = GetNodeByEntityID("Person", args[0].toString());
     // person_node.print();
     result.emplace_back();
     result.back().reserve(8);
