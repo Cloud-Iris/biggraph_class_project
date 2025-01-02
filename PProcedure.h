@@ -10,3 +10,7 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result);
 void ic7(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result);
 void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result);
+
+// 将自定义的函数抽到 PProcedure.h 中
+// 根据节点类型和数据实体 id 获取 Node 对象
+Node GetNode(std::string node_type, const std::string &data_id);

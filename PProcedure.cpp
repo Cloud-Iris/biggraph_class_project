@@ -59,22 +59,19 @@ std::map<long long, std::pair<long long, long long> > &candidates_index, std::ma
     }
 }
 
-Node GetNode(std::string idType, const std::string &person_id) {
-    auto IDMapIt = type2IDMap.find(idType);
-    auto& IDMap = *IDMapIt->second;
+Node GetNode(std::string node_type, const std::string &data_id) {
+    auto& IDMap = *(type2IDMap.find(node_type)->second);
+    auto& myMap = *(type2Map.find(node_type)->second);
 
-    auto MapIt = type2Map.find(idType);
-    auto& myMap = *MapIt->second;
-
-    auto it = IDMap.find(person_id);
+    // 根据 数据实体 id 获取 Node 类的全局 id
+    auto it = IDMap.find(data_id);
     if (it == IDMap.end()) {
-        // To Do: Error handling
         cout<<"PersonIDMap not found"<<endl;
         return Node(-1);
     }
+    // 根据找到的 Node 类的全局 id 获取 Node 对象
     auto it2 = myMap.find(it->second);
     if (it2 == myMap.end()) {
-        // To Do: Error handling
         cout<<"PersonMap not found"<<endl;
         return Node(-1);
     }
