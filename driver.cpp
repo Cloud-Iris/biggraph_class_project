@@ -199,8 +199,10 @@ void load_node(
                 // 如果是 ID 属性，则将该属性的值作为节点的 ID
                 if (propsType.find("ID")!= std::string::npos) {
                     id = *value;
+                    // printf("id: %s\n", id.toString().c_str());
                 }
                 // 以 key-value 的形式存储属性
+                // 注意，ID的存储方式是 key(string): "ID(Person)"  value(long long): 32985348834375
                 node.setValues(props[i], value);
             }
             
@@ -223,14 +225,6 @@ void load_node(
             innerMap[nodeIdStr] = node;
             // { 数据中的 ID : Node 类中的全局 id }
             innerIDMap[id.toString()] = nodeIdStr;
-
-            // if(id.toString() == "349"){
-            //     node.print();
-            // }
-            // else if (nodeIdStr == "349"){
-            //     std::cout << " odeIdStr: " << nodeIdStr << "\n";
-            // }
-            
         }
 
         // std::cout << nodeType << " Mapsize: " << type2Map[nodeType]->size() << "\n";
@@ -286,6 +280,7 @@ void load_edge(
             props = split(line1, '|');
             attribute = "";
 
+            // 获得关系 两侧的 节点类型
             fromType = parseTypeFromProp(props[0]);
             toType = parseTypeFromProp(props[1]);
 
@@ -294,16 +289,12 @@ void load_edge(
             // std::cout << "fromType: " << fromType << " toType: " << toType << "\n";
         }
 
-        auto fromIDMapIt = type2IDMap.find(fromType);
-        auto fromNodeMapIt = type2Map.find(fromType);
-        auto toIDMapIt = type2IDMap.find(toType);
-        auto toNodeMapIt = type2Map.find(toType);
-
-
-        auto& fromIDMap = *fromIDMapIt->second;
-        auto& fromNodeMap = *fromNodeMapIt->second;
-        auto& toIDMap = *toIDMapIt->second;
-        auto& toNodeMap = *toNodeMapIt->second;
+        // { Node 类中的全局 id : 构造好的 Node 对象 }
+        auto& fromNodeMap = *(type2Map.find(fromType)->second);
+        auto& toNodeMap = *(type2Map.find(toType)->second);
+        // { 数据中的 ID : Node 类中的全局 id }
+        auto& fromIDMap = *(type2IDMap.find(fromType)->second);
+        auto& toIDMap = *(type2IDMap.find(toType)->second);
 
         // 逐行读入节点数据
         // 以 Person_knows_Person 的数据为例，数据格式为：933|2199023256077|1271939457947
@@ -330,33 +321,34 @@ void load_edge(
             if (fromNodeIt == fromNodeMap.end()) {
                 throw std::runtime_error("Index: " + index1 + " 不在 " + fromType + " Map中");
             }
-            Node fromNode = fromNodeMap[index1];
 
             auto toNodeIt = toNodeMap.find(index2);
             if (toNodeIt == toNodeMap.end()) {
                 throw std::runtime_error("Index: " + index2 + " 不在 " + toType + " Map中");
             }
-            Node toNode = toNodeMap[index2];
 
             std::string attributeValue;
             if (props.size() == 3) attributeValue = stringContents[2];
+ 
+            // 把 nodeInfo.second[1] 去掉 .CSV 的后缀后，转换为大写，作为关系名
+            std::string relationName = split(nodeInfo.second[1], '.')[0];
+            std::transform(relationName.begin(), relationName.end(), relationName.begin(), ::toupper);
 
-            // 将字符串中的所有字符转换为大写
-            std::string upperFromType = fromType;
-            std::string upperToType = toType;
-            std::transform(upperFromType.begin(), upperFromType.end(), upperFromType.begin(), ::toupper);
-            std::transform(upperToType.begin(), upperToType.end(), upperToType.begin(), ::toupper);
-            std::string relationName = upperFromType + "_" + upperToType;
+            if (index1 == "8336" && relationName == "ORGANISATION_ISLOCATEDIN_PLACE") {
+                std::cout << "☀" << endl;
+                std::cout << "index1: " << index1 << " index2: " << index2 << endl;
+                std::cout << "☀" << endl;
+            }
 
-            // TODO: fail to add relation
-            Node& citeNode = fromNodeIt->second;
-
+            // 用 & 操作符表示是对原本节点的引用，而不是拷贝
+            Node& fromNodeRef = fromNodeIt->second;
+            Node& toNodeRef = toNodeIt->second;
             // 直接在map中修改节点
-            citeNode.addRelation(relationName, index2, attribute, attributeValue);
-            // if(id1 == "32985348833679"){
-            //     citeNode.print();
-            //     cout << "relationName: " << relationName << " index2: " << index2 << " attribute: " << attribute << " attributeValue: " << attributeValue << "\n";
-            // }
+            fromNodeRef.addRelation(relationName, index2, attribute, attributeValue);
+            // 如果是 PERSON_PERSON 关系，则需要在 toNode 中也添加关系，形成双向关系
+            if (relationName == "PERSON_KNOWS_PERSON") {
+                toNodeRef.addRelation(relationName, index1, attribute, attributeValue);
+            }
         }
     }
 }
@@ -423,7 +415,7 @@ int load_dataset(string sf)
         // {"Forum", {"dynamic", "Forum_hasMember_Person.csv", "forum_hasMember_person_0_0.csv"}},
         // {"Forum", {"dynamic", "Forum_hasModerator_Person.csv", "forum_hasModerator_person_0_0.csv"}},
         // {"Forum", {"dynamic", "Forum_hasTag_Tag.csv", "forum_hasTag_tag_0_0.csv"}},
-        // {"Organisation", {"static", "Organisation_isLocatedIn_Place.csv", "organisation_isLocatedIn_place_0_0.csv"}},
+        {"Organisation", {"static", "Organisation_isLocatedIn_Place.csv", "organisation_isLocatedIn_place_0_0.csv"}},
         // {"Place", {"static", "Place_isPartOf_Place.csv", "place_isPartOf_place_0_0.csv"}},
         // {"Tag", {"static", "Tag_hasType_TagClass.csv", "tag_hasType_tagclass_0_0.csv"}},
         // {"TagClass", {"static", "TagClass_isSubclassOf_TagClass.csv", "tagclass_isSubclassOf_tagclass_0_0.csv"}}
@@ -461,8 +453,16 @@ int main(int argc, char *argv[]) {
 
     // [FILL HERE] Load the dataset according to the scale factor
     load_dataset(sf);
+    // IC1 测试代码：查找核心 Person 对象
+    // GetNode("Person", "32985348834375").print();
+    // IC1 测试代码：查找目标对象【看看是否将 studyAt\workAt 关系添加到了 Person 节点中】
+    // GetNode("Person", "4398046512492").print();
+    // IC1 测试代码：查找 Organisation 对象 Florida_State_University_College_of_Business (数据 ID:6805, 全局 ID 8336)
+    // GetNode("Organisation", "6805").print();
+    // IC1 测试代码：查找 Place 对象 Tallahassee (数据 ID:903, 全局 ID 974)
+    // GetNode("Place", "903").print();
     // 调试代码，仅仅查看是否成功加载数据集
-    return 0;
+    // return 0;
 
     // Repeatedly read test cases from stdin
     string line;
@@ -495,21 +495,26 @@ int main(int argc, char *argv[]) {
                         long long personId = stoll(personId_str);
                         args.emplace_back(personId);
                         args.emplace_back(firstName);
-                        // ic1(args, result);
-                    } else if (proc == "ic2") {
-                        size_t pos = line.find(" ");
-                        string personId_str = line.substr(0, pos);
-                        string datetime_str = line.substr(pos + 1);
-                        long long personId = stoll(personId_str);
-                        long long datetime = stoll(datetime_str);
-                        args.emplace_back(personId);
-                        args.emplace_back(datetime);
-                        ic2(args, result);
-                    } else if (proc == "is1") {
-                        long long personId = stoll(line);
-                        args.emplace_back(personId);
-                        is1(args, result);
+                        // 中心点这个人是 Alfred|Hoffmann
+                        printf("参数1-要检查的 personID: %lld\n参数2-认识的人要遵守的 firstName: %s\n", personId, firstName.c_str());
+                        ic1(args, result);
+                        // return 0;
                     }
+                    // else if (proc == "ic2") {
+                    //     size_t pos = line.find(" ");
+                    //     string personId_str = line.substr(0, pos);
+                    //     string datetime_str = line.substr(pos + 1);
+                    //     long long personId = stoll(personId_str);
+                    //     long long datetime = stoll(datetime_str);
+                    //     args.emplace_back(personId);
+                    //     args.emplace_back(datetime);
+                    //     ic2(args, result);
+                    // } 
+                    // else if (proc == "is1") {
+                    //     long long personId = stoll(line);
+                    //     args.emplace_back(personId);
+                    //     is1(args, result);
+                    // }
                     printResults(result);
                     getline(fin, line);
                     // 3 种文件都会有一个数字，表示接下来数据的行数

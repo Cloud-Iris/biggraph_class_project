@@ -110,17 +110,24 @@ Node GetNodeByGlobalID(std::string node_type, const std::string &global_id) {
  *  4. person_studyAt_organisation。对应表头文件：Person_studyAt_University
  *      4.1 如果这个人存在学习的学校，则还要找到这个学校所在的城市。
  *          关系：organisation_isLocatedIn_place。对应表头文件：Organisation_isLocatedIn_Place
+ * 
+ * 结果要求：
+ * 排序：按照 distance 从小到大排序，按照 last name 字典序排序，按照 person_id 从小到大排序
+ * 最多返回 20 个结果
  */
 void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
     string first_name = args[1].toString();
     const char* first_name_char = first_name.data();
     unsigned first_name_size = first_name.size();
-
+    // 参数是 数据实体 id，找到 参数对应的 Person 节点
     Node person_node = GetNode("Person", args[0].toString());
+    // person_node.print();
 
     if (person_node.node_id_ == -1)
         return;
+
     std::set<std::tuple<int, std::string, long long, unsigned> > candidates;
+    // 注意这里是全局 id
     TYPE_ENTITY_LITERAL_ID start_vid = person_node.node_id_;
     std::vector<TYPE_ENTITY_LITERAL_ID> curr_frontier({start_vid});
     std::set<TYPE_ENTITY_LITERAL_ID> visited({start_vid});
@@ -128,88 +135,156 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     for (int distance = 0; distance <= 3; distance++) {
         std::vector<TYPE_ENTITY_LITERAL_ID > next_frontier;
         for (const auto& vid : curr_frontier) {
-        Node froniter_person(vid);
-        bool flag = vid == start_vid;
-        flag = flag || (froniter_person["firstName"]->toString() != first_name);
-        if (flag) continue;
-        std::string last_name = froniter_person["lastName"]->toString();
-        long long person_id = froniter_person["id"]->toLLong();
-        auto tup = std::make_tuple(distance, last_name, person_id, vid);
-        if (candidates.size() >= LIMIT_NUM) {
-            auto& candidate = *candidates.rbegin();
-            if (tup > candidate) continue;
-        }
-        candidates.emplace(std::move(tup));
-        if (candidates.size() > LIMIT_NUM) {
-            candidates.erase(--candidates.end());
-        }
+            // Node froniter_person(vid);
+            Node froniter_person = GetNodeByGlobalID("Person", std::to_string(vid));
+            if (froniter_person.node_id_ == -1) return;
+
+            bool flag = vid == start_vid;
+            // 查看这些人的 firstName 是否等于 给定的参数 $firstName
+            // flag = flag || (froniter_person["firstName"]->toString() != first_name);
+            flag = flag || (froniter_person.columns["firstName:STRING"].toString() != first_name);
+            if (flag) continue;
+            // froniter_person.print();
+
+            // std::string last_name = froniter_person["lastName"]->toString();
+            // long long person_id = froniter_person["id"]->toLLong();
+            std::string last_name = froniter_person.columns["lastName:STRING"].toString();
+            long long person_id = froniter_person.columns["id:ID(Person)"].toLLong();
+            // 符合条件的 认识的人
+            auto tup = std::make_tuple(distance, last_name, person_id, vid);
+            // 如果此时候已经有 20 个结果了，且当前结果比最后一个结果还要大，则跳过
+            if (candidates.size() >= LIMIT_NUM) {
+                auto& candidate = *candidates.rbegin();
+                // c++ 元组会自动按元素 逐个进行比较
+                if (tup > candidate) continue;
+            }
+            // std::move 将 tup 的所有权从当前作用域转移到 candidates 集合，不进行数据的拷贝
+            candidates.emplace(std::move(tup));
+            // 若插入新元素导致 candidates.size() 大于 LIMIT_NUM，则删除最后一个元素
+            if (candidates.size() > LIMIT_NUM) {
+                candidates.erase(--candidates.end());
+            }
         }
         if (candidates.size() >= LIMIT_NUM || distance == 3) break;
+
         for (auto vid : curr_frontier) {
-        Node froniter_person(vid);
-        std::shared_ptr<const string[]> friends_list = nullptr; unsigned list_len;
-        froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
-        for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
-            string friend_vid = friends_list[friend_index];
-            // if (visited.find(friend_vid) == visited.end()) {
-            // visited.emplace(friend_vid);
-            // next_frontier.emplace_back(friend_vid);
-            // }
-        }
-        friends_list = nullptr;
-        froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_IN);
-        for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
-            string friend_vid = friends_list[friend_index];
-            // if (visited.find(friend_vid) == visited.end()) {
-            // visited.emplace(friend_vid);
-            // next_frontier.emplace_back(friend_vid);
-            // }
-        }
-        friends_list = nullptr;
+            // Node froniter_person(vid);
+            Node froniter_person = GetNodeByGlobalID("Person", std::to_string(vid));
+            std::shared_ptr<const string[]> friends_list = nullptr; unsigned list_len;
+            // froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_OUT);
+            froniter_person.GetLinkedNodes("PERSON_KNOWS_PERSON", friends_list, list_len, EDGE_OUT);
+
+            for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
+                // 将字符串形式的全局 id 转为 unsigned 类型
+                TYPE_ENTITY_LITERAL_ID friend_vid = std::stoul(friends_list[friend_index]);
+                // cout << "friend_vid: " << friend_vid << endl;
+                // 如果当前节点未被访问过，则将其加入 visited 集合。并在下一轮循环中继续访问
+                if (visited.find(friend_vid) == visited.end()) {
+                    visited.emplace(friend_vid);
+                    next_frontier.emplace_back(friend_vid);
+                }
+            }
+            // 因为我们组在增加 "PERSON_KNOWS_PERSON" 关系的时候，加入的是双向边，所以这里不需要遍历出边
+            // friends_list = nullptr;
+            // froniter_person.GetLinkedNodes("KNOWS", friends_list, list_len, EDGE_IN);
         }
         std::sort(next_frontier.begin(), next_frontier.end());
+        // 交换内容 next_frontier 会变为空容器，而 curr_frontier 会包含排序后的元素。
         curr_frontier.swap(next_frontier);
     }
 
     for (const auto & tup : candidates) {
+        // 将元组中的第 4 个元素赋值给 vid，即候选者的全局 id
         unsigned vid = std::get<3>(tup);
-        Node person(vid);
+        // Node person(vid);
+        Node person = GetNodeByGlobalID("Person", std::to_string(vid));
 
         result.emplace_back();
+        // 预先分配 13 个空间记录候选者的 13 个信息
         result.back().reserve(13);
+        // 认识的人数据实体 id、last name、distance
         result.back().emplace_back(std::get<2>(tup));
         result.back().emplace_back(std::get<1>(tup));
         result.back().emplace_back(std::get<0>(tup));
-        result.back().emplace_back(*person["birthday"]);
-        result.back().emplace_back(*person["creationDate"]);
-        result.back().emplace_back(*person["gender"]);
-        result.back().emplace_back(*person["browserUsed"]);
-        result.back().emplace_back(*person["locationIP"]);
-        result.back().emplace_back(*person["email"]);
-        result.back().emplace_back(*person["language"]);
-        result.back().emplace_back(*Node(person["PERSON_PLACE"]->toLLong())["name"]);   // TODO: PERSON_PLACE not in original data
+        // birthday、creationDate、gender、browserUsed、locationIP、email、language、place
+        // result.back().emplace_back(*person["birthday"]);
+        result.back().emplace_back(person.columns["birthday:LONG"]);
+        result.back().emplace_back(person.columns["creationDate:LONG"]);
+        result.back().emplace_back(person.columns["gender:STRING"]);
+        result.back().emplace_back(person.columns["browserUsed:STRING"]);
+        result.back().emplace_back(person.columns["locationIP:STRING"]);
+        result.back().emplace_back(person.columns["email:STRING[]"]);
+        result.back().emplace_back(person.columns["language:STRING[]"]);
 
-        std::shared_ptr<const unsigned[]> list = nullptr; unsigned list_len = 0;
-        std::shared_ptr<const long long[]> prop_list = nullptr; unsigned prop_len = 0;
+        
+        // 要补充所在城市、大学、公司
+        // result.back().emplace_back(*Node(person["PERSON_PLACE"]->toLLong())["name"]);   // TODO: PERSON_PLACE not in original data
+        auto place_pair = person.relations["PERSON_ISLOCATEDIN_CITY"][0];
+        // place_pair 的形式是 <全局 id(place), "">
+        string person_place_id = place_pair.first;
+        Node person_place = GetNodeByGlobalID("Place", person_place_id);
+        result.back().emplace_back(person_place.columns["name:STRING"]);
 
+        // std::shared_ptr<const unsigned[]> list = nullptr; unsigned list_len = 0;
+        // std::shared_ptr<const long long[]> prop_list = nullptr; unsigned prop_len = 0;
+
+        // 推入一个 vector，存储大学信息
         result.back().emplace_back(GPStore::Value::Type::LIST);
-        person.GetLinkedNodesWithEdgeProps("STUDY_AT", list, prop_list, prop_len, list_len, EDGE_OUT);
-        for (unsigned i = 0; i < list_len; ++i) {
-        Node university(list[i]);
-        Node location_city(university["ORGANISATION_PLACE"]->toLLong());    // TODO: "ORGANISATION_PLACE"
-        vector<GPStore::Value *> university_prop_vec{university["name"], new GPStore::Value(prop_list[i]), location_city["name"]};
-        result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
+        // 返回关系为 STUDY_AT 的节点
+        // person.GetLinkedNodesWithEdgeProps("STUDY_AT", list, prop_list, prop_len, list_len, EDGE_OUT);
+        for (auto study_pair : person.relations["PERSON_STUDYAT_UNIVERSITY"]) {
+            // study_pair 的形式是 <全局 id(organisation), "classYear">
+            string organ_id = study_pair.first;
+            Node university = GetNodeByGlobalID("Organisation", organ_id);
+            auto place_pair = university.relations["ORGANISATION_ISLOCATEDIN_PLACE"][0];
+            // place_pair 的形式是 <全局 id(place), "">
+            string organ_place_id = place_pair.first;
+            Node location_city = GetNodeByGlobalID("Place", organ_place_id);
+            vector<GPStore::Value *> university_prop_vec{
+                &university.columns["name:STRING"],
+                new GPStore::Value(std::stoll(study_pair.second)), // studyAt.classYear
+                &location_city.columns["name:STRING"]
+            };
+            result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
         }
-        list = nullptr; prop_list = nullptr;
+        // for (unsigned i = 0; i < list_len; ++i) {
+        //     Node university(list[i]);
+        //     Node location_city(university["ORGANISATION_PLACE"]->toLLong());    // TODO: "ORGANISATION_PLACE"
+        //     vector<GPStore::Value *> university_prop_vec{
+        //         university["name"],
+        //         new GPStore::Value(prop_list[i]), // studyAt.classYear
+        //         location_city["name"]
+        //     };
+        //     result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
+        // }
+        // list = nullptr; prop_list = nullptr;
 
+        // 推入一个 vector，存储公司信息
         result.back().emplace_back(GPStore::Value::Type::LIST);
-        person.GetLinkedNodesWithEdgeProps("WORK_AT", list, prop_list, prop_len, list_len, EDGE_OUT);
-        for (unsigned i = 0; i < list_len; ++i) {
-        Node company(list[i]);
-        Node location_country(company["ORGANISATION_PLACE"]->toLLong());
-        vector<GPStore::Value *> university_prop_vec{company["name"], new GPStore::Value(prop_list[i]), location_country["name"]};
-        result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
+        // 返回关系为 WORK_AT 的节点
+        for (auto work_pair : person.relations["PERSON_WORKAT_COMPANY"]) {
+            // work_pair 的形式是 <全局 id(organisation), "workFrom">
+            string organ_id = work_pair.first;
+            Node company = GetNodeByGlobalID("Organisation", organ_id);
+            auto place_pair = company.relations["ORGANISATION_ISLOCATEDIN_PLACE"][0];
+            // place_pair 的形式是 <全局 id(place), "">
+            string organ_place_id = place_pair.first;
+            Node location_country = GetNodeByGlobalID("Place", organ_place_id);
+            vector<GPStore::Value *> university_prop_vec{
+                &company.columns["name:STRING"],
+                new GPStore::Value(std::stoll(work_pair.second)), // workAt.workFrom
+                &location_country.columns["name:STRING"]
+            };
+            result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
         }
+
+        // person.GetLinkedNodesWithEdgeProps("WORK_AT", list, prop_list, prop_len, list_len, EDGE_OUT);
+        // for (unsigned i = 0; i < list_len; ++i) {
+        //     Node company(list[i]);
+        //     Node location_country(company["ORGANISATION_PLACE"]->toLLong());
+        //     vector<GPStore::Value *> university_prop_vec{company["name"], new GPStore::Value(prop_list[i]), location_country["name"]};
+        //     result.back().back().data_.List->emplace_back(new GPStore::Value(university_prop_vec, true));
+        // }
     }
 }
 
