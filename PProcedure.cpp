@@ -78,6 +78,19 @@ Node GetNode(std::string node_type, const std::string &data_id) {
     return it2->second;
 }
 
+// 根据节点类型和全局 id 获取 Node 对象
+// 注意：这里相当于是拷贝，所以只能读取，修改不会作用于原对象
+Node GetNodeByGlobalID(std::string node_type, const std::string &global_id) {
+    // 根据节点类型找到对应的 Node Map
+    auto& nodeMap = *(type2Map.find(node_type)->second);
+    auto it = nodeMap.find(global_id);
+    if (it == nodeMap.end()) {
+        cout << node_type << " Map not found ❗"<<endl;
+        return Node(-1);
+    }
+    return it->second;
+}
+
 /**
  * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
  * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
