@@ -390,7 +390,7 @@ void is1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
     }
 
     for (auto& item : person_node.relations) {
-        if(item.first.find("PERSON_PLACE")==-1)
+        if(item.first.find("PERSON_ISLOCATEDIN_CITY")==-1)
         {
             continue;
         }

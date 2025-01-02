@@ -484,11 +484,11 @@ int main(int argc, char *argv[]) {
                     //     args.emplace_back(datetime);
                     //     ic2(args, result);
                     // } 
-                    // else if (proc == "is1") {
-                    //     long long personId = stoll(line);
-                    //     args.emplace_back(personId);
-                    //     is1(args, result);
-                    // }
+                    else if (proc == "is1") {
+                        long long personId = stoll(line);
+                        args.emplace_back(personId);
+                        is1(args, result);
+                    }
                     printResults(result);
                     getline(fin, line);
                     // 3 种文件都会有一个数字，表示接下来数据的行数
