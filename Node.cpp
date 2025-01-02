@@ -15,6 +15,8 @@ GPStore::Value* Node::operator[](const std::string& property_string) {
 
 }
 
+// 根据关系名在 节点的 relations 中进行查找，返回从节点出发，用 pre_str 关系 指向的节点的全局 id 列表
+// 边的方向 edge_dir 暂时不用
 void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const std::string[]>& nodes_list, unsigned& list_len, char edge_dir) {
     // 初始化节点列表长度为0
     list_len = 0;
@@ -34,7 +36,7 @@ void Node::GetLinkedNodes(const std::string& pre_str, std::shared_ptr<const std:
     // 分配内存并填充节点列表
     std::shared_ptr<std::string[]> temp_list(new std::string[list_len]);
     for (unsigned i = 0; i < list_len; ++i) {
-        temp_list[i] = relation_list[i].first; // 直接使用字符串
+        temp_list[i] = relation_list[i].first; // 节点的全局 id
     }
 
     // 将临时列表赋值给输出参数
@@ -69,8 +71,16 @@ void Node::print() {
     {
         std::cout << "----------------\n";
         std::cout << item.first << "\n";
-        for(auto& item2:item.second)
-            std::cout << item2.first << " " << item2.second << "\n";
+        std::vector<std::pair<std::string, std::string>> relation_vec = item.second;
+        if (relation_vec.size() <= 20) {
+            for(auto& relation: relation_vec)
+                std::cout << relation.first << " " << relation.second << "\n";
+        } else {
+            for(size_t i = 0; i < 20; ++i)
+                std::cout << relation_vec[i].first << " " << relation_vec[i].second << "\n";
+            
+            std::cout << "... 共有 " << relation_vec.size() << " 个" << item.first << " 关系\n";
+        }
     }
     std::cout << "relationsProp_size: " << this->relationsProp.size() << "\n";
     for(auto& item:this->relationsProp)
@@ -85,6 +95,7 @@ void Node::addRelation(std::string relationName, std::string index, std::string 
 
 
 // Different node lists, formatted as id2Node
+// { Node 类中的全局 id : 构造好的 Node 对象 }
 std::unordered_map<std::string, Node> PersonMap;
 std::unordered_map<std::string, Node> OrganisationMap;
 std::unordered_map<std::string, Node> PlaceMap;
@@ -95,6 +106,7 @@ std::unordered_map<std::string, Node> TagClassMap;
 std::unordered_map<std::string, Node> ForumMap;
 
 // Entity ID to global ID mapping for nodes
+// { 数据中的 ID : Node 类中的全局 id }
 std::unordered_map<std::string, std::string> PersonIDMap;
 std::unordered_map<std::string, std::string> OrganisationIDMap;
 std::unordered_map<std::string, std::string> PlaceIDMap;
