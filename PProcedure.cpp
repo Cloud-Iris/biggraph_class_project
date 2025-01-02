@@ -92,10 +92,9 @@ Node GetNodeByGlobalID(std::string node_type, const std::string &global_id) {
 }
 
 /**
- * ic1 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
- * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的：
- * distance(1 2 3)、summaries of the Persons workplaces 和 places of study
- * input: ic1 32985348834375 Tom
+ * ic1  input: $personId $firstName
+ * 给定一个人的 $personId，找这个人直接或者间接认识的人（关系限制为 knows，最多 3 steps）
+ * 然后筛选这些人 firstName 是否是给定的 $firstName，返回这些人 Persons 的 13 种信息
  * 
  * 涉及到的节点类型：Person, Place(:LABEL=country, city), Organisation(:LABEL=university, company)
  *  1. Place 有 3 种 LABEL: country, city, continent，这里只涉及到 country 和 city
@@ -178,7 +177,6 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
             for (unsigned friend_index = 0; friend_index < list_len; ++friend_index) {
                 // 将字符串形式的全局 id 转为 unsigned 类型
                 TYPE_ENTITY_LITERAL_ID friend_vid = std::stoul(friends_list[friend_index]);
-                // cout << "friend_vid: " << friend_vid << endl;
                 // 如果当前节点未被访问过，则将其加入 visited 集合。并在下一轮循环中继续访问
                 if (visited.find(friend_vid) == visited.end()) {
                     visited.emplace(friend_vid);
@@ -225,9 +223,6 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
         string person_place_id = place_pair.first;
         Node person_place = GetNodeByGlobalID("Place", person_place_id);
         result.back().emplace_back(person_place.columns["name:STRING"]);
-
-        // std::shared_ptr<const unsigned[]> list = nullptr; unsigned list_len = 0;
-        // std::shared_ptr<const long long[]> prop_list = nullptr; unsigned prop_len = 0;
 
         // 推入一个 vector，存储大学信息
         result.back().emplace_back(GPStore::Value::Type::LIST);

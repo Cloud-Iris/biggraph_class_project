@@ -172,8 +172,6 @@ void load_node(
         // 以 Person 的表头为例，数据格式为：id:ID(Person)|firstName:STRING|lastName:STRING|gender:STRING|birthday:LONG|creationDate:LONG|locationIP:STRING|browserUsed:STRING|language:STRING[]|email:STRING[]
         while (std::getline(finHeader, line1)) {
             props = split(line1, '|');
-            // for (auto& item : props) std::cout << item << " ";
-            // std::cout << "\n";
         }
 
         // 逐行读入节点数据
@@ -265,12 +263,6 @@ void load_edge(
         checkOpen(finHeader, headerPath);
         checkOpen(finFile, filePath);
 
-        // // check if all files are loaded
-        // if(filePath.find("person_isLocatedIn_place_0_0")!=-1)
-        // {
-        //     std::cout << "filePath: " << filePath << "\n";
-        // }
-
         std::vector<std::string> props;
 
         // 读入表头，获取属性列表
@@ -357,25 +349,17 @@ void load_edge(
 int load_dataset(string sf)
 {
     string separator = "/";
-    // 当前目录下的两个数据集
-    string smallGraph = "social_network-csv_composite-longdateformatter-sf0.1";
-    string bigGraph = "social_network-csv_composite-longdateformatter-sf3";
+    // 当前目录下的两个数据集  "...-sf0.1"  "...-sf3"
+    string dataBasePath = "social_network-csv_composite-longdateformatter-sf" + sf;
 
     string headersPath, dynamicPath, staticPath;
     string line1;
     int nodeId = 0;
 
-    // 根据缩放因子选择相应的数据目录
-    if(sf=="0.1"){
-        headersPath = smallGraph + separator + "headers";
-        dynamicPath = smallGraph + separator + "dynamic";
-        staticPath = smallGraph + separator + "static";
-    }
-    else{
-        headersPath = bigGraph + separator + "headers";
-        dynamicPath = bigGraph + separator + "dynamic";
-        staticPath = bigGraph + separator + "static";
-    }
+    // 根据缩放因子选择相应的数据目录  
+    headersPath = dataBasePath + separator + "headers";
+    dynamicPath = dataBasePath + separator + "dynamic";
+    staticPath = dataBasePath + separator + "static";
 
     // 定义节点类型到文件的映射
     // 以 节点类型 为键，值为一个vector，包含了 动态/静态、节点 的表头文件、具体的节点数据文件
@@ -423,19 +407,9 @@ int load_dataset(string sf)
 
     load_node(sf, separator, headersPath, dynamicPath, staticPath, nodeType2File);
 
-    // test if load successfully
-    // auto it = PersonIDMap.find("32985348833679");
-    // if (it != PersonIDMap.end()) {
-    //     std::cout << "PersonIDMap found" << "\n";
-    // }
-    // else{
-    //     std::cout << "PersonIDMap not found" << "\n";
-    // }
-
     load_edge(sf, separator, headersPath, dynamicPath, staticPath, nodeType2RelationFile);
 
     cout<<"Data loaded successfully"<<endl;
-
     return 0; // 返回0表示成功加载数据集
 }
 
