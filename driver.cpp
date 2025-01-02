@@ -341,6 +341,16 @@ void load_edge(
             if (relationName == "PERSON_KNOWS_PERSON") {
                 toNodeRef.addRelation(relationName, index1, attribute, attributeValue);
             }
+
+            // 在处理边的时候，对于Post和Comment的创建者关系，建立反向关系
+            if (relationName == "POST_HASCREATOR_PERSON") {
+                // toNode是Person，fromNode是Post
+                toNodeRef.addRelation("PERSON_CREATED_POST", index1, attribute, attributeValue);
+            }
+            else if (relationName == "COMMENT_HASCREATOR_PERSON") {
+                // toNode是Person，fromNode是Comment
+                toNodeRef.addRelation("PERSON_CREATED_COMMENT", index1, attribute, attributeValue);
+            }
         }
     }
 }
@@ -474,16 +484,14 @@ int main(int argc, char *argv[]) {
                         ic1(args, result);
                         // return 0;
                     }
-                    // else if (proc == "ic2") {
-                    //     size_t pos = line.find(" ");
-                    //     string personId_str = line.substr(0, pos);
-                    //     string datetime_str = line.substr(pos + 1);
-                    //     long long personId = stoll(personId_str);
-                    //     long long datetime = stoll(datetime_str);
-                    //     args.emplace_back(personId);
-                    //     args.emplace_back(datetime);
-                    //     ic2(args, result);
-                    // } 
+                    else if (proc == "ic2") {
+                        size_t pos = line.find(" ");
+                        string personId_str = line.substr(0, pos);
+                        string datetime_str = line.substr(pos + 1);
+                        args.emplace_back(personId_str);
+                        args.emplace_back(datetime_str);
+                        ic2(args, result);
+                    } 
                     else if (proc == "is1") {
                         long long personId = stoll(line);
                         args.emplace_back(personId);

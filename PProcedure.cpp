@@ -288,71 +288,84 @@ void ic1(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStor
 // 仅考虑在给定$maxDate之前（不包括当天）创建的消息。
 // input: ic2 15393162789932 1345740969124
 void ic2(const std::vector<GPStore::Value> &args, std::vector<std::vector<GPStore::Value>> &result) {
+    // 获取输入参数
     long long person_id = args[0].toLLong();
     long long max_date = args[1].toLLong();
+    
+    // 获取起始Person节点
+    Node person_node = GetNodeByEntityID("Person", std::to_string(person_id));
+    if (person_node.node_id_ == -1) return;
 
-    Node person_node = GetNodeByEntityID("Person", args[0].toString());
-    if (person_node.node_id_ == -1) {
-        return;
-    }
+    // 用于存储结果的map，key为创建时间（用于排序）
+    std::map<std::pair<long long, long long>, std::tuple<long long, std::string, std::string, long long, std::string, long long>> messages;
+    
+    // 获取所有好友
+    std::vector<std::string> friends_list;
+    unsigned list_len;
+    person_node.GetLinkedNodes("PERSON_KNOWS_PERSON", friends_list, list_len, EDGE_OUT);
 
-    std::set<std::tuple<long long, std::string, std::string>> messages; // 存储消息，按日期排序
-    std::vector<std::string> friends_list; 
-    unsigned list_len = 0;
+    // 遍历每个好友
+    for (const auto& friend_id : friends_list) {
+        Node friend_node = GetNodeByGlobalID("Person", friend_id);
+        if (friend_node.node_id_ == -1) continue;
 
-    // get list of friends
-    person_node.GetLinkedNodes("PERSON_PERSON", friends_list, list_len, EDGE_OUT);
-    // // Ensure that the friends_id is global id.
-    // for(auto& item : friends_list)
-    // {
-    //     cout<<item<<endl;
-    // }
-    for (unsigned i = 0; i < list_len; ++i) {
-        Node friend_node = GetNodeByGlobalID("Person", friends_list[i]);
-        std::vector<std::string> messages_list; 
-        unsigned messages_len = 0;
+        // 获取好友的基本信息
+        long long friend_person_id = friend_node.columns["id:ID(Person)"].toLLong();
+        std::string firstName = friend_node.columns["firstName:STRING"].toString();
+        std::string lastName = friend_node.columns["lastName:STRING"].toString();
 
-        // 获取好友的post列表
-        friend_node.GetLinkedNodes("PERSON_POST", messages_list, messages_len, EDGE_OUT);
-        cout<< " messages_len: "<<messages_len<<endl;
-        for (unsigned j = 0; j < messages_len; ++j) {
-            Node message_node = GetNodeByGlobalID("Post", messages_list[j]);
-            long long creation_date = message_node["creationDate"]->toLLong();
-            cout<<" creation_date: "<<creation_date<<endl;
-            if (creation_date < max_date) {
-                std::string content = message_node["content"]->toString();
-                std::string message_id = message_node["id"]->toString();
-                messages.emplace(creation_date, message_id, content);
+        // 处理该好友创建的所有Post
+        for (const auto& post_pair : friend_node.relations["PERSON_CREATED_POST"]) {
+            Node post = GetNodeByGlobalID("Post", post_pair.first);
+            if (post.node_id_ == -1) continue;
+
+            long long creation_date = post.columns["creationDate:LONG"].toLLong();
+            if (creation_date > max_date) continue;
+
+            long long message_id = post.columns["id:ID(Post)"].toLLong();
+            std::string content;
+            
+            // 先尝试获取imageFile
+            auto it = post.columns.find("imageFile:STRING");
+            if (it != post.columns.end() && !it->second.toString().empty()) {
+                content = it->second.toString();
+            } else {
+                // 如果没有imageFile或为空，则获取content
+                content = post.columns["content:STRING"].toString();
             }
+
+            messages[{-creation_date, message_id}] = std::make_tuple(
+                friend_person_id, firstName, lastName, message_id, content, creation_date);
         }
 
-        // 获取好友的comment列表
-        friend_node.GetLinkedNodes("PERSON_COMMENT", messages_list, messages_len, EDGE_OUT);
-        for (unsigned j = 0; j < messages_len; ++j) {
-            Node message_node = GetNodeByGlobalID("Comment", messages_list[j]);
-            long long creation_date = message_node["creationDate"]->toLLong();
-            if (creation_date < max_date) {
-                std::string content = message_node["content"]->toString();
-                std::string message_id = message_node["id"]->toString();
-                messages.emplace(creation_date, message_id, content);
-            }
+        // 处理该好友创建的所有Comment
+        for (const auto& comment_pair : friend_node.relations["PERSON_CREATED_COMMENT"]) {
+            Node comment = GetNodeByGlobalID("Comment", comment_pair.first);
+            if (comment.node_id_ == -1) continue;
+
+            long long creation_date = comment.columns["creationDate:LONG"].toLLong();
+            if (creation_date >= max_date) continue;
+
+            long long message_id = comment.columns["id:ID(Comment)"].toLLong();
+            std::string content = comment.columns["content:STRING"].toString();
+
+            messages[{-creation_date, message_id}] = std::make_tuple(
+                friend_person_id, firstName, lastName, message_id, content, creation_date);
         }
     }
 
-    for(auto& item : messages)
-    {
-        cout<<std::get<0>(item)<<" "<<std::get<1>(item)<<" "<<std::get<2>(item)<<endl;
-    }
-
-    // 将消息添加到结果中
-    int count = 0;
-    for (const auto& msg : messages) {
-        if (count >= 20) break;
+    // 将结果添加到result中
+    for (const auto& message : messages) {
         result.emplace_back();
-        result.back().emplace_back(std::get<1>(msg)); // message_id
-        result.back().emplace_back(std::get<2>(msg)); // content
-        result.back().emplace_back(std::get<0>(msg)); // creation_date
-        count++;
+        const auto& [friend_id, first_name, last_name, message_id, content, creation_date] = message.second;
+        result.back().emplace_back(friend_id);    // personId
+        result.back().emplace_back(first_name);   // firstName
+        result.back().emplace_back(last_name);    // lastName
+        result.back().emplace_back(message_id);   // messageId
+        result.back().emplace_back(content);      // content
+        result.back().emplace_back(creation_date); // creationDate
+        
+        if (result.size() >= LIMIT_NUM) break;
     }
 }
 
